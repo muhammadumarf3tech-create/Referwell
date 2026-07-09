@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="ReferWell.Api/ReferWell.Api.csproj" />
+  <Project Path="ReferWell.Application/ReferWell.Application.csproj" />
+  <Project Path="ReferWell.Domain/ReferWell.Domain.csproj" />
+  <Project Path="ReferWell.Infrastructure/ReferWell.Infrastructure.csproj" />
+  <Project Path="ReferWell.Tests/ReferWell.Tests.csproj" />
+</Solution>
