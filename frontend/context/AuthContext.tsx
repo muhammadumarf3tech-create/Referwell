@@ -7,8 +7,9 @@ export interface AuthUser {
   id: string;
   fullName: string;
   email: string;
-  role: 'Admin' | 'TriageNurse' | 'GP';
+  roles: string[];
   token: string;
+  title?: string;
 }
 
 interface AuthContextType {
@@ -41,7 +42,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (stored && storedUser) {
       const parsed = parseJwt(stored);
       if (parsed && parsed.exp * 1000 > Date.now()) {
-        setUser(JSON.parse(storedUser));
+        const u = JSON.parse(storedUser);
+        if (u && !u.roles && u.role) {
+          u.roles = [u.role];
+        }
+        setUser(u);
       } else {
         localStorage.removeItem('referwell_token');
         localStorage.removeItem('referwell_user');
@@ -67,8 +72,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: parseJwt(data.token)?.sub || '',
       fullName: data.fullName,
       email: data.email,
-      role: data.role,
+      roles: data.roles,
       token: data.token,
+      title: data.title
     };
 
     localStorage.setItem('referwell_token', data.token);

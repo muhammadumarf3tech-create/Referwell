@@ -6,8 +6,10 @@ namespace ReferWell.Domain.Entities;
 public class Referral
 {
     public Guid Id { get; set; } = Guid.NewGuid();
-    public string PatientName { get; set; } = string.Empty;
-    public DateTime PatientDateOfBirth { get; set; }
+    public Guid PatientId { get; set; }
+    public Patient? Patient { get; set; }
+    public string CaseNo { get; set; } = string.Empty;
+
     public string ReferringGPId { get; set; } = string.Empty; // FK to ApplicationUser
     public Guid CreatedByUserId { get; set; }
     public ApplicationUser? CreatedByUser { get; set; }
@@ -21,6 +23,10 @@ public class Referral
     public DateTime ReceivedAt { get; set; } = DateTime.UtcNow;
     public DateTime SlaDeadline { get; set; }
     public bool SlaBreach { get; set; } = false;
+
+    // Assignment management
+    public Guid? AssignedToUserId { get; set; }
+    public ApplicationUser? AssignedToUser { get; set; }
 
     // Claim management (multi-user concurrency)
     public Guid? ClaimedByUserId { get; set; }
@@ -39,6 +45,7 @@ public class Referral
 
     // Navigation
     public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
+    public ICollection<ReferralAttachment> Attachments { get; set; } = new List<ReferralAttachment>();
 
     // ─── State Machine ────────────────────────────────────────────────────────
 
@@ -83,10 +90,9 @@ public class Referral
     public static DateTime CalculateSlaDeadline(UrgencyLevel urgency, DateTime receivedAt) =>
         urgency switch
         {
-            UrgencyLevel.Emergency => receivedAt.AddHours(4),
-            UrgencyLevel.Urgent    => receivedAt.AddHours(24),
-            UrgencyLevel.Soon      => receivedAt.AddDays(7),
-            UrgencyLevel.Routine   => receivedAt.AddDays(30),
-            _                      => receivedAt.AddDays(30)
+            UrgencyLevel.Urgent     => receivedAt.AddHours(24),
+            UrgencyLevel.SemiUrgent => receivedAt.AddDays(7),
+            UrgencyLevel.Routine    => receivedAt.AddDays(30),
+            _                       => receivedAt.AddDays(30)
         };
 }

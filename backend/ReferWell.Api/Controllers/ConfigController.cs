@@ -52,6 +52,7 @@ public class ConfigController : ControllerBase
 
         // Recalculate all active referral scores
         var referrals = await _db.Referrals
+            .Include(r => r.Patient)
             .Where(r => r.Status != Domain.Enums.ReferralStatus.Completed
                      && r.Status != Domain.Enums.ReferralStatus.Declined)
             .ToListAsync();
@@ -59,7 +60,7 @@ public class ConfigController : ControllerBase
         foreach (var r in referrals)
         {
             r.PriorityScore = PriorityCalculator.Calculate(
-                r.Urgency, r.ReceivedAt, r.PatientDateOfBirth,
+                r.Urgency, r.ReceivedAt, r.Patient?.DateOfBirth ?? DateTime.UtcNow,
                 request.WeightUrgency, request.WeightWaittime, request.WeightPatient);
         }
 

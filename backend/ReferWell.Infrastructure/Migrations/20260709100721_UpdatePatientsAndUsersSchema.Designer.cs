@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ReferWell.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ReferWell.Infrastructure.Data;
 namespace ReferWell.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260709100721_UpdatePatientsAndUsersSchema")]
+    partial class UpdatePatientsAndUsersSchema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -83,7 +86,7 @@ namespace ReferWell.Infrastructure.Migrations
                             Gender = "Male",
                             IsActive = true,
                             Password = "Admin@123",
-                            PasswordHash = "$2a$11$aEbsxRKpYr79oo/CSLVXqe9XiR4Z3uBzsZM6OXu7tKPs3MHByQdTa",
+                            PasswordHash = "$2a$11$FrydPyduqCznsYvyOV0jO.Ce9HLx60Nd1/Xtv99QSX67xPiVhQk4q",
                             PhoneNumber = "+64 21 111 2222",
                             Title = "Mr."
                         },
@@ -96,7 +99,7 @@ namespace ReferWell.Infrastructure.Migrations
                             Gender = "Female",
                             IsActive = true,
                             Password = "Nurse@123",
-                            PasswordHash = "$2a$11$NMD3xWV1DmWfAMkeUXCFgey/KMt/II4KQgaHoOQIi8PzzLCDLEYTu",
+                            PasswordHash = "$2a$11$wYHUI.Tx8slHNPNpXZYlG.AbG9X4svahCVo3DJq8yEFVied3X1B6O",
                             PhoneNumber = "+64 22 222 3333",
                             Title = "Mrs."
                         },
@@ -109,7 +112,7 @@ namespace ReferWell.Infrastructure.Migrations
                             Gender = "Male",
                             IsActive = true,
                             Password = "Gp1@1234",
-                            PasswordHash = "$2a$11$BQPxCsnI3v8HQt0Svu7JI.cFEGkhVhb65LrEb3tffhqY62dv.tRiC",
+                            PasswordHash = "$2a$11$fohIVzxEYXK30BXKuxDKQuWMHWabUHaAvJQdFJh90kw3ycmQxuEua",
                             PhoneNumber = "+64 27 333 4444",
                             Title = "Dr."
                         },
@@ -122,7 +125,7 @@ namespace ReferWell.Infrastructure.Migrations
                             Gender = "Female",
                             IsActive = true,
                             Password = "Gp2@1234",
-                            PasswordHash = "$2a$11$80Q7KtNOaJbm3Gn7q.rP.eX7oTBrYCFbJ4PwdVXhmRZesfpHzij8m",
+                            PasswordHash = "$2a$11$mxQ6Qk1GDtKPPKCFDRtum.InjBx/ILI2vQ.BwxhwAUpdsIm/0Xhdq",
                             PhoneNumber = "+64 29 444 5555",
                             Title = "Dr."
                         });
@@ -333,7 +336,7 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("55555555-5555-5555-5555-555555555555"),
-                            CreatedAt = new DateTime(2026, 7, 9, 12, 24, 6, 111, DateTimeKind.Utc).AddTicks(9344),
+                            CreatedAt = new DateTime(2026, 7, 9, 10, 7, 20, 816, DateTimeKind.Utc).AddTicks(8056),
                             DateOfBirth = new DateTime(1955, 3, 10, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "alice.martin@example.com",
                             Gender = "Female",
@@ -344,7 +347,7 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("66666666-6666-6666-6666-666655555555"),
-                            CreatedAt = new DateTime(2026, 7, 9, 12, 24, 6, 111, DateTimeKind.Utc).AddTicks(9351),
+                            CreatedAt = new DateTime(2026, 7, 9, 10, 7, 20, 816, DateTimeKind.Utc).AddTicks(8065),
                             DateOfBirth = new DateTime(1970, 7, 22, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "bob.clarke@example.com",
                             Gender = "Male",
@@ -355,7 +358,7 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("77777777-7777-7777-7777-777755555555"),
-                            CreatedAt = new DateTime(2026, 7, 9, 12, 24, 6, 111, DateTimeKind.Utc).AddTicks(9353),
+                            CreatedAt = new DateTime(2026, 7, 9, 10, 7, 20, 816, DateTimeKind.Utc).AddTicks(8071),
                             DateOfBirth = new DateTime(1940, 11, 5, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "carol.ahmed@example.com",
                             Gender = "Female",
@@ -366,7 +369,7 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("88888888-8888-8888-8888-888855555555"),
-                            CreatedAt = new DateTime(2026, 7, 9, 12, 24, 6, 111, DateTimeKind.Utc).AddTicks(9356),
+                            CreatedAt = new DateTime(2026, 7, 9, 10, 7, 20, 816, DateTimeKind.Utc).AddTicks(8073),
                             DateOfBirth = new DateTime(1985, 2, 14, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "david.johnson@example.com",
                             Gender = "Male",
@@ -377,7 +380,7 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("99999999-9999-9999-9999-999955555555"),
-                            CreatedAt = new DateTime(2026, 7, 9, 12, 24, 6, 111, DateTimeKind.Utc).AddTicks(9357),
+                            CreatedAt = new DateTime(2026, 7, 9, 10, 7, 20, 816, DateTimeKind.Utc).AddTicks(8075),
                             DateOfBirth = new DateTime(1932, 8, 30, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "eva.rodriguez@example.com",
                             Gender = "Female",
@@ -388,7 +391,7 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-5555-5555-5555-555555555555"),
-                            CreatedAt = new DateTime(2026, 7, 9, 12, 24, 6, 111, DateTimeKind.Utc).AddTicks(9359),
+                            CreatedAt = new DateTime(2026, 7, 9, 10, 7, 20, 816, DateTimeKind.Utc).AddTicks(8077),
                             DateOfBirth = new DateTime(1960, 4, 18, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "frank.lee@example.com",
                             Gender = "Male",
@@ -399,7 +402,7 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("bbbbbbbb-5555-5555-5555-555555555555"),
-                            CreatedAt = new DateTime(2026, 7, 9, 12, 24, 6, 111, DateTimeKind.Utc).AddTicks(9365),
+                            CreatedAt = new DateTime(2026, 7, 9, 10, 7, 20, 816, DateTimeKind.Utc).AddTicks(8079),
                             DateOfBirth = new DateTime(1978, 12, 3, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "grace.kim@example.com",
                             Gender = "Female",
@@ -410,7 +413,7 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("cccccccc-5555-5555-5555-555555555555"),
-                            CreatedAt = new DateTime(2026, 7, 9, 12, 24, 6, 111, DateTimeKind.Utc).AddTicks(9372),
+                            CreatedAt = new DateTime(2026, 7, 9, 10, 7, 20, 816, DateTimeKind.Utc).AddTicks(8081),
                             DateOfBirth = new DateTime(1945, 6, 25, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "henry.smith@example.com",
                             Gender = "Male",
@@ -428,11 +431,6 @@ namespace ReferWell.Infrastructure.Migrations
 
                     b.Property<Guid?>("AssignedToUserId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("CaseNo")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTime?>("ClaimedAt")
                         .HasColumnType("datetime2");
@@ -504,9 +502,8 @@ namespace ReferWell.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("18f84987-efd0-40e4-add8-ba1dd444aab2"),
+                            Id = new Guid("89ca8759-bd49-4e20-9a0b-255b20c6323f"),
                             AssignedToUserId = new Guid("33333333-3333-3333-3333-333333333333"),
-                            CaseNo = "Ref-000001",
                             CreatedAt = new DateTime(2024, 5, 27, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = new Guid("33333333-3333-3333-3333-333333333333"),
                             PatientId = new Guid("55555555-5555-5555-5555-555555555555"),
@@ -522,9 +519,8 @@ namespace ReferWell.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("d282f527-84fb-424c-a60b-9b46e28c671d"),
+                            Id = new Guid("41b64237-b7a7-4195-b464-2d56d01fcec1"),
                             AssignedToUserId = new Guid("33333333-3333-3333-3333-333333333333"),
-                            CaseNo = "Ref-000002",
                             CreatedAt = new DateTime(2024, 5, 22, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = new Guid("33333333-3333-3333-3333-333333333333"),
                             PatientId = new Guid("66666666-6666-6666-6666-666655555555"),
@@ -540,9 +536,8 @@ namespace ReferWell.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("aa7b9257-d581-49b8-8129-e17efd5768cb"),
+                            Id = new Guid("df4de84a-eb2d-4c19-bb88-124ad165b505"),
                             AssignedToUserId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            CaseNo = "Ref-000003",
                             CreatedAt = new DateTime(2024, 5, 29, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = new Guid("44444444-4444-4444-4444-444444444444"),
                             PatientId = new Guid("77777777-7777-7777-7777-777755555555"),
@@ -558,9 +553,8 @@ namespace ReferWell.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("e64e3d2a-05fe-486c-ab4c-9a5aa4c23264"),
+                            Id = new Guid("cf04eff1-c15c-491c-9932-b958670d1eaf"),
                             AssignedToUserId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            CaseNo = "Ref-000004",
                             CreatedAt = new DateTime(2024, 5, 17, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = new Guid("44444444-4444-4444-4444-444444444444"),
                             PatientId = new Guid("88888888-8888-8888-8888-888855555555"),
@@ -576,9 +570,8 @@ namespace ReferWell.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("821a4b94-eb5f-4d84-9d41-a87ddf014f85"),
+                            Id = new Guid("0b018bf8-ae28-4247-96fb-aefa57aaaccb"),
                             AssignedToUserId = new Guid("33333333-3333-3333-3333-333333333333"),
-                            CaseNo = "Ref-000005",
                             CreatedAt = new DateTime(2024, 5, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = new Guid("33333333-3333-3333-3333-333333333333"),
                             PatientId = new Guid("99999999-9999-9999-9999-999955555555"),
@@ -594,9 +587,8 @@ namespace ReferWell.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("6b4c73ed-1955-4b3f-b1e8-739624ea04bd"),
+                            Id = new Guid("ad7663a0-0645-45fb-a461-f8401ab65696"),
                             AssignedToUserId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            CaseNo = "Ref-000006",
                             CreatedAt = new DateTime(2024, 5, 30, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = new Guid("44444444-4444-4444-4444-444444444444"),
                             PatientId = new Guid("aaaaaaaa-5555-5555-5555-555555555555"),
@@ -612,9 +604,8 @@ namespace ReferWell.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("175cfe3f-b57d-47af-8ec0-3c2eb837c8be"),
+                            Id = new Guid("5dd3c0e6-4c73-4d2a-8b94-bbff291dcffa"),
                             AssignedToUserId = new Guid("33333333-3333-3333-3333-333333333333"),
-                            CaseNo = "Ref-000007",
                             CreatedAt = new DateTime(2024, 5, 25, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = new Guid("33333333-3333-3333-3333-333333333333"),
                             PatientId = new Guid("bbbbbbbb-5555-5555-5555-555555555555"),
@@ -630,9 +621,8 @@ namespace ReferWell.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("6cb559e6-9ae9-4848-a9ff-1779bf3a2bf2"),
+                            Id = new Guid("fbbc20e9-c3b1-474d-98da-c0819bd350fa"),
                             AssignedToUserId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            CaseNo = "Ref-000008",
                             CreatedAt = new DateTime(2024, 5, 12, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = new Guid("44444444-4444-4444-4444-444444444444"),
                             PatientId = new Guid("cccccccc-5555-5555-5555-555555555555"),

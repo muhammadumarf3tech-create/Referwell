@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,7 @@ using ReferWell.Domain.Exceptions;
 using ReferWell.Domain.Services;
 using ReferWell.Infrastructure.Data;
 using ReferWell.Infrastructure.Hubs;
+using System.IO;
 using System.Security.Claims;
 
 namespace ReferWell.Api.Controllers;
@@ -29,35 +31,142 @@ public class ReferralsController : ControllerBase
     private Guid CurrentUserId =>
         Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? User.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)!);
-    private string CurrentRole => User.FindFirstValue(ClaimTypes.Role)!;
+    
+    private List<string> CurrentRoles =>
+        User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+
+    [HttpGet("next-case-no")]
+    public async Task<IActionResult> GetNextCaseNo()
+    {
+        var lastReferral = await _db.Referrals.OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
+        int nextIndex = 1;
+        if (lastReferral != null && !string.IsNullOrEmpty(lastReferral.CaseNo) && lastReferral.CaseNo.StartsWith("Ref-"))
+        {
+            if (int.TryParse(lastReferral.CaseNo.Substring(4), out var lastIdx))
+            {
+                nextIndex = lastIdx + 1;
+            }
+        }
+        var caseNo = $"Ref-{nextIndex:D6}";
+        return Ok(new { caseNo });
+    }
 
     // ── GET /api/referrals ────────────────────────────────────────────────────
     [HttpGet]
-    public async Task<IActionResult> GetReferrals([FromQuery] string? status, [FromQuery] string? urgency)
+    public async Task<IActionResult> GetReferrals(
+        [FromQuery] string? status, 
+        [FromQuery] string? urgency, 
+        [FromQuery] string? assignedTo,
+        [FromQuery] string? patientSearch,
+        [FromQuery] string? caseNo,
+        [FromQuery] string? sortBy,
+        [FromQuery] DateTime? fromDate,
+        [FromQuery] DateTime? toDate,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 15)
     {
         var query = _db.Referrals
             .Include(r => r.CreatedByUser)
             .Include(r => r.ClaimedByUser)
+            .Include(r => r.AssignedToUser)
+            .Include(r => r.Patient)
+            .Include(r => r.Attachments)
             .AsQueryable();
 
-        // RBAC: GPs only see their own referrals
-        if (CurrentRole == "GP")
-            query = query.Where(r => r.CreatedByUserId == CurrentUserId);
+        // RBAC: Non-admins only see referrals assigned to them
+        if (!CurrentRoles.Contains("Admin"))
+        {
+            query = query.Where(r => r.AssignedToUserId == CurrentUserId);
+        }
+        else if (!string.IsNullOrEmpty(assignedTo))
+        {
+            var assigneeList = assignedTo.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(id => Guid.TryParse(id, out var parsedId) ? (Guid?)parsedId : null)
+                .Where(id => id.HasValue)
+                .Select(id => id!.Value)
+                .ToList();
+            if (assigneeList.Any())
+            {
+                query = query.Where(r => r.AssignedToUserId.HasValue && assigneeList.Contains(r.AssignedToUserId.Value));
+            }
+        }
 
-        if (!string.IsNullOrEmpty(status) && Enum.TryParse<ReferralStatus>(status, out var parsedStatus))
-            query = query.Where(r => r.Status == parsedStatus);
+        if (!string.IsNullOrEmpty(status))
+        {
+            var statusList = status.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(s => Enum.TryParse<ReferralStatus>(s, out var parsedStatus) ? (ReferralStatus?)parsedStatus : null)
+                .Where(s => s.HasValue)
+                .Select(s => s!.Value)
+                .ToList();
+            if (statusList.Any())
+            {
+                query = query.Where(r => statusList.Contains(r.Status));
+            }
+        }
 
-        if (!string.IsNullOrEmpty(urgency) && Enum.TryParse<UrgencyLevel>(urgency, out var parsedUrgency))
-            query = query.Where(r => r.Urgency == parsedUrgency);
+        if (!string.IsNullOrEmpty(urgency))
+        {
+            var urgencyList = urgency.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(u => Enum.TryParse<UrgencyLevel>(u, out var parsedUrgency) ? (UrgencyLevel?)parsedUrgency : null)
+                .Where(u => u.HasValue)
+                .Select(u => u!.Value)
+                .ToList();
+            if (urgencyList.Any())
+            {
+                query = query.Where(r => urgencyList.Contains(r.Urgency));
+            }
+        }
+
+        if (!string.IsNullOrEmpty(patientSearch))
+        {
+            var cleanSearch = patientSearch.Trim();
+            query = query.Where(r => r.Patient != null && (r.Patient.Name.Contains(cleanSearch) || r.Patient.NhiNumber.Contains(cleanSearch)));
+        }
+
+        if (!string.IsNullOrEmpty(caseNo))
+        {
+            var cleanCaseNo = caseNo.Trim();
+            query = query.Where(r => r.CaseNo.Contains(cleanCaseNo));
+        }
+
+        if (fromDate.HasValue)
+        {
+            var fromUtc = DateTime.SpecifyKind(fromDate.Value.Date, DateTimeKind.Utc);
+            query = query.Where(r => r.ReceivedAt >= fromUtc);
+        }
+
+        if (toDate.HasValue)
+        {
+            var toUtc = DateTime.SpecifyKind(toDate.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+            query = query.Where(r => r.ReceivedAt <= toUtc);
+        }
+
+        // Order before paginating
+        if (sortBy == "receivedDate")
+        {
+            query = query.OrderByDescending(r => r.ReceivedAt);
+        }
+        else
+        {
+            query = query.OrderByDescending(r => r.PriorityScore).ThenBy(r => r.SlaDeadline);
+        }
+
+        // Count stats *before* paginating but *after* applying filters
+        var totalCount = await query.CountAsync();
+        var activeCount = await query.CountAsync(r => r.Status != ReferralStatus.Completed && r.Status != ReferralStatus.Declined);
+        var urgentCount = await query.CountAsync(r => (r.Urgency == UrgencyLevel.Urgent || r.Urgency == UrgencyLevel.Emergency) && r.Status != ReferralStatus.Completed);
+        var breachedCount = await query.CountAsync(r => r.SlaBreach);
 
         var referrals = await query
-            .OrderByDescending(r => r.PriorityScore)
-            .ThenBy(r => r.SlaDeadline)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(r => new
             {
                 r.Id,
-                r.PatientName,
-                r.PatientDateOfBirth,
+                r.CaseNo,
+                PatientId = r.PatientId,
+                PatientName = r.Patient != null ? r.Patient.Name : string.Empty,
+                PatientDateOfBirth = r.Patient != null ? r.Patient.DateOfBirth : DateTime.UtcNow,
                 r.SpecialistType,
                 r.Reason,
                 Urgency = r.Urgency.ToString(),
@@ -68,13 +177,27 @@ public class ReferralsController : ControllerBase
                 r.SlaBreach,
                 r.CreatedAt,
                 r.RowVersion,
-                CreatedByUser = r.CreatedByUser == null ? null : new { r.CreatedByUser.FullName, r.CreatedByUser.Email },
-                ClaimedByUser = r.ClaimedByUser == null ? null : new { r.ClaimedByUser.FullName, r.ClaimedByUser.Email },
+                CreatedByUser = r.CreatedByUser == null ? null : new { r.CreatedByUser.FullName, r.CreatedByUser.Email, r.CreatedByUser.Title },
+                ClaimedByUser = r.ClaimedByUser == null ? null : new { r.ClaimedByUser.FullName, r.ClaimedByUser.Email, r.ClaimedByUser.Title },
+                AssignedToUser = r.AssignedToUser == null ? null : new { r.AssignedToUser.FullName, r.AssignedToUser.Email, r.AssignedToUser.Title },
+                Attachments = r.Attachments.Select(a => new { a.Id, a.FileName, a.FilePath, a.ContentType }).ToList(),
                 r.ClaimedAt
             })
             .ToListAsync();
 
-        return Ok(referrals);
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+        return Ok(new
+        {
+            items = referrals,
+            totalCount,
+            activeCount,
+            urgentCount,
+            breachedCount,
+            page,
+            pageSize,
+            totalPages
+        });
     }
 
     // ── GET /api/referrals/{id} ───────────────────────────────────────────────
@@ -84,6 +207,9 @@ public class ReferralsController : ControllerBase
         var referral = await _db.Referrals
             .Include(r => r.CreatedByUser)
             .Include(r => r.ClaimedByUser)
+            .Include(r => r.AssignedToUser)
+            .Include(r => r.Patient)
+            .Include(r => r.Attachments)
             .Include(r => r.AuditLogs)
                 .ThenInclude(a => a.PerformedByUser)
             .FirstOrDefaultAsync(r => r.Id == id);
@@ -91,7 +217,7 @@ public class ReferralsController : ControllerBase
         if (referral == null) return NotFound();
 
         // RBAC check for GPs
-        if (CurrentRole == "GP" && referral.CreatedByUserId != CurrentUserId)
+        if (CurrentRoles.Contains("GP") && !CurrentRoles.Contains("Admin") && !CurrentRoles.Contains("TriageNurse") && referral.CreatedByUserId != CurrentUserId)
             return Forbid();
 
         return Ok(referral);
@@ -99,27 +225,42 @@ public class ReferralsController : ControllerBase
 
     // ── POST /api/referrals ───────────────────────────────────────────────────
     [HttpPost]
-    [Authorize(Roles = "GP,Admin")]
     public async Task<IActionResult> CreateReferral([FromBody] CreateReferralRequest request)
     {
         var weights = await GetWeights();
 
+        var patient = await _db.Patients.FindAsync(request.PatientId);
+        if (patient == null) return BadRequest(new { message = "Patient not found." });
+
+        // Generate CaseNo
+        var lastReferral = await _db.Referrals.OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
+        int nextIndex = 1;
+        if (lastReferral != null && !string.IsNullOrEmpty(lastReferral.CaseNo) && lastReferral.CaseNo.StartsWith("Ref-"))
+        {
+            if (int.TryParse(lastReferral.CaseNo.Substring(4), out var lastIdx))
+            {
+                nextIndex = lastIdx + 1;
+            }
+        }
+        var caseNo = $"Ref-{nextIndex:D6}";
+
         var receivedAt = DateTime.UtcNow;
         var referral = new Referral
         {
-            PatientName = request.PatientName,
-            PatientDateOfBirth = request.PatientDateOfBirth,
+            PatientId = request.PatientId,
             SpecialistType = request.SpecialistType,
             Reason = request.Reason,
             Urgency = request.Urgency,
             CreatedByUserId = CurrentUserId,
             ReferringGPId = CurrentUserId.ToString(),
             ReceivedAt = receivedAt,
-            SlaDeadline = Referral.CalculateSlaDeadline(request.Urgency, receivedAt)
+            SlaDeadline = Referral.CalculateSlaDeadline(request.Urgency, receivedAt),
+            AssignedToUserId = request.AssignedToUserId ?? CurrentUserId,
+            CaseNo = caseNo
         };
 
         referral.PriorityScore = PriorityCalculator.Calculate(
-            referral.Urgency, referral.ReceivedAt, referral.PatientDateOfBirth,
+            referral.Urgency, referral.ReceivedAt, patient.DateOfBirth,
             weights.urgency, weights.waittime, weights.patient);
 
         _db.Referrals.Add(referral);
@@ -135,6 +276,57 @@ public class ReferralsController : ControllerBase
         await _db.SaveChangesAsync();
         await _hub.Clients.Group("QueueGroup").SendAsync("ReferralCreated", referral.Id);
         return CreatedAtAction(nameof(GetReferral), new { id = referral.Id }, referral);
+    }
+
+    // ── PUT /api/referrals/{id} ───────────────────────────────────────────────
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateReferral(Guid id, [FromBody] UpdateReferralRequest request)
+    {
+        var referral = await _db.Referrals
+            .Include(r => r.Patient)
+            .FirstOrDefaultAsync(r => r.Id == id);
+
+        if (referral == null) return NotFound();
+
+        // RBAC check for GPs (pure GP only — TriageNurse and Admin can edit any)
+        if (CurrentRoles.Contains("GP") && !CurrentRoles.Contains("Admin") && !CurrentRoles.Contains("TriageNurse") && referral.CreatedByUserId != CurrentUserId)
+            return Forbid();
+
+        // Optimistic concurrency: set the OriginalValue so EF detects if another user saved first
+        if (request.RowVersion != null)
+        {
+            _db.Entry(referral).Property(r => r.RowVersion).OriginalValue = request.RowVersion;
+        }
+
+        referral.SpecialistType = request.SpecialistType;
+        referral.Reason = request.Reason;
+        referral.Urgency = request.Urgency;
+        referral.AssignedToUserId = request.AssignedToUserId;
+        referral.UpdatedAt = DateTime.UtcNow;
+
+        var weights = await GetWeights();
+        referral.SlaDeadline = Referral.CalculateSlaDeadline(referral.Urgency, referral.ReceivedAt);
+        referral.PriorityScore = PriorityCalculator.Calculate(
+            referral.Urgency, referral.ReceivedAt, referral.Patient?.DateOfBirth ?? DateTime.UtcNow,
+            weights.urgency, weights.waittime, weights.patient);
+
+        _db.AuditLogs.Add(new AuditLog
+        {
+            ReferralId = referral.Id,
+            PerformedByUserId = CurrentUserId,
+            Action = "Updated"
+        });
+
+        try
+        {
+            await _db.SaveChangesAsync();
+            await _hub.Clients.Group("QueueGroup").SendAsync("ReferralUpdated", referral.Id);
+            return Ok(new { message = "Referral updated successfully.", rowVersion = referral.RowVersion });
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict(new { message = "This referral was recently modified by another user. Please close and reopen the form to get the latest version before saving." });
+        }
     }
 
     // ── POST /api/referrals/{id}/claim ────────────────────────────────────────
@@ -183,7 +375,7 @@ public class ReferralsController : ControllerBase
         _db.AuditLogs.Add(new AuditLog { ReferralId = id, PerformedByUserId = CurrentUserId, Action = "Released" });
         await _db.SaveChangesAsync();
         await _hub.Clients.Group("QueueGroup").SendAsync("ReferralReleased", id);
-        return Ok();
+        return Ok(new { message = "Referral released.", rowVersion = referral.RowVersion });
     }
 
     // ── POST /api/referrals/{id}/transition ───────────────────────────────────
@@ -193,8 +385,6 @@ public class ReferralsController : ControllerBase
     {
         var referral = await _db.Referrals.FindAsync(id);
         if (referral == null) return NotFound();
-
-        _db.Entry(referral).Property(r => r.RowVersion).OriginalValue = req.RowVersion;
 
         try
         {
@@ -217,11 +407,112 @@ public class ReferralsController : ControllerBase
         }
         catch (DbUpdateConcurrencyException)
         {
-            return Conflict(new { message = "Concurrency conflict. Please refresh." });
+            return Conflict(new { message = "Unable to update status: the referral was modified by another user. Please refresh and try again." });
         }
         catch (InvalidReferralTransitionException ex)
         {
             return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { message = "Unable to update status. Please try again." });
+        }
+    }
+
+    // ── ATTACHMENTS ──────────────────────────────────────────────────────────
+    [HttpPost("{id}/attachments")]
+    public async Task<IActionResult> UploadAttachment(Guid id, IFormFile file)
+    {
+        var referral = await _db.Referrals.FindAsync(id);
+        if (referral == null) return NotFound();
+
+        if (file == null || file.Length == 0)
+            return BadRequest(new { message = "No file uploaded." });
+
+        // 1. Extension validation (case-insensitive)
+        var ext = Path.GetExtension(file.FileName);
+        if (string.IsNullOrEmpty(ext) || !ext.Equals(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { message = "Only PDF file attachments (.pdf) are allowed." });
+        }
+
+        // 2. MIME type validation (case-insensitive)
+        if (string.IsNullOrEmpty(file.ContentType) || !file.ContentType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { message = "Invalid file type. Only application/pdf MIME type is allowed." });
+        }
+
+        // 3. Security validation: Magic number / signature check (%PDF- = 0x25 0x50 0x44 0x46)
+        try
+        {
+            using (var stream = file.OpenReadStream())
+            {
+                var buffer = new byte[4];
+                var read = await stream.ReadAsync(buffer, 0, 4);
+                if (read < 4 || buffer[0] != 0x25 || buffer[1] != 0x50 || buffer[2] != 0x44 || buffer[3] != 0x46)
+                {
+                    return BadRequest(new { message = "Security validation failed: File signature does not match PDF format." });
+                }
+            }
+        }
+        catch (Exception)
+        {
+            return BadRequest(new { message = "Failed to perform security validation on the uploaded file." });
+        }
+
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+        if (!Directory.Exists(uploadsFolder))
+            Directory.CreateDirectory(uploadsFolder);
+
+        var fileId = Guid.NewGuid();
+        var extension = Path.GetExtension(file.FileName);
+        var uniqueFileName = $"{fileId}{extension}";
+        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await file.CopyToAsync(stream);
+        }
+
+        var attachment = new ReferralAttachment
+        {
+            Id = fileId,
+            ReferralId = id,
+            FileName = file.FileName,
+            FilePath = $"/uploads/{uniqueFileName}",
+            ContentType = file.ContentType
+        };
+
+        _db.ReferralAttachments.Add(attachment);
+        _db.AuditLogs.Add(new AuditLog { ReferralId = id, PerformedByUserId = CurrentUserId, Action = $"Uploaded {file.FileName}" });
+        await _db.SaveChangesAsync();
+
+        await _hub.Clients.Group("QueueGroup").SendAsync("ReferralUpdated", referral.Id);
+        return Ok(attachment);
+    }
+
+    [HttpGet("attachments/{attachmentId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetAttachment(Guid attachmentId, [FromQuery] bool download = false)
+    {
+        var attachment = await _db.ReferralAttachments.FindAsync(attachmentId);
+        if (attachment == null) return NotFound();
+
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+        var filePath = Path.Combine(uploadsFolder, Path.GetFileName(attachment.FilePath));
+
+        if (!System.IO.File.Exists(filePath))
+            return NotFound();
+
+        var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+        if (download)
+        {
+            return File(fileBytes, attachment.ContentType, attachment.FileName);
+        }
+        else
+        {
+            Response.Headers.Append("Content-Disposition", "inline");
+            return File(fileBytes, attachment.ContentType);
         }
     }
 
@@ -236,8 +527,10 @@ public class ReferralsController : ControllerBase
 }
 
 public record CreateReferralRequest(
-    string PatientName, DateTime PatientDateOfBirth, string SpecialistType,
-    string Reason, UrgencyLevel Urgency);
+    Guid PatientId, string SpecialistType, string Reason, UrgencyLevel Urgency, Guid? AssignedToUserId);
+
+public record UpdateReferralRequest(
+    string SpecialistType, string Reason, UrgencyLevel Urgency, Guid? AssignedToUserId, byte[]? RowVersion);
 
 public record ConcurrencyRequest(byte[] RowVersion);
 public record TransitionRequest(ReferralStatus NewStatus, byte[] RowVersion, string? Notes);

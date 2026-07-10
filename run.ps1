@@ -29,9 +29,9 @@ Write-Host "✅ Frontend dependencies ready." -ForegroundColor Green
 
 # ── Step 3: Launch backend and frontend concurrently ─────────────────────────
 Write-Host "`n🚀 Starting servers...`n" -ForegroundColor Cyan
-Write-Host "  Backend:  http://localhost:5165" -ForegroundColor Blue
+Write-Host "  Backend:  http://localhost:5188" -ForegroundColor Blue
 Write-Host "  Frontend: http://localhost:4000" -ForegroundColor Blue
-Write-Host "  Swagger:  http://localhost:5165/swagger`n" -ForegroundColor Blue
+Write-Host "  Swagger:  http://localhost:5188/swagger`n" -ForegroundColor Blue
 
 $backendJob = Start-Job -ScriptBlock {
     Set-Location "$using:PWD\backend"

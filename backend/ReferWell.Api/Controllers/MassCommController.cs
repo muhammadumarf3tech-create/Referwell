@@ -52,6 +52,7 @@ public class MassCommController : ControllerBase
         // Resolve recipients based on filter
         var referrals = await _db.Referrals
             .Include(r => r.CreatedByUser)
+            .Include(r => r.Patient)
             .Where(r => string.IsNullOrEmpty(req.UrgencyFilter)
                      || r.Urgency == Enum.Parse<UrgencyLevel>(req.UrgencyFilter))
             .Where(r => string.IsNullOrEmpty(req.StatusFilter)
@@ -70,8 +71,9 @@ public class MassCommController : ControllerBase
 
         foreach (var r in referrals)
         {
+            var patientName = r.Patient?.Name ?? string.Empty;
             var body = req.BodyTemplate
-                .Replace("{PatientName}", r.PatientName)
+                .Replace("{PatientName}", patientName)
                 .Replace("{SpecialistType}", r.SpecialistType)
                 .Replace("{Status}", r.Status.ToString())
                 .Replace("{SlaDeadline}", r.SlaDeadline.ToString("dd MMM yyyy HH:mm"));
@@ -79,7 +81,7 @@ public class MassCommController : ControllerBase
             campaign.Messages.Add(new MassCommMessage
             {
                 RecipientEmail = r.CreatedByUser?.Email ?? "unknown@referwell.com",
-                RecipientName = r.PatientName,
+                RecipientName = patientName,
                 RenderedBody = body
             });
         }

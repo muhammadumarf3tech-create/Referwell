@@ -12,9 +12,9 @@ interface Weight {
 }
 
 const keyLabels: Record<string, { label: string; color: string; desc: string }> = {
-  weight_urgency:  { label: 'Urgency Weight',    color: 'from-red-500 to-orange-500', desc: 'Higher urgency referrals score higher' },
-  weight_waittime: { label: 'Wait Time Weight',   color: 'from-blue-500 to-purple-500', desc: 'Longer-waiting referrals score higher' },
-  weight_patient:  { label: 'Patient Age Weight', color: 'from-emerald-500 to-teal-500', desc: 'Older patients receive a higher score' },
+  weight_urgency:  { label: 'Urgency Weight',    color: 'from-red-600 to-orange-500', desc: 'Higher urgency referrals score higher' },
+  weight_waittime: { label: 'Wait Time Weight',   color: 'from-blue-600 to-indigo-600', desc: 'Longer-waiting referrals score higher' },
+  weight_patient:  { label: 'Patient Age Weight', color: 'from-emerald-600 to-teal-500', desc: 'Older patients receive a higher score' },
 };
 
 export default function ConfigsPage() {
@@ -29,7 +29,10 @@ export default function ConfigsPage() {
 
   useEffect(() => {
     if (!user) { router.push('/login'); return; }
-    if (!['Admin', 'TriageNurse'].includes(user.role)) { router.push('/dashboard'); return; }
+    
+    // Check if user has TriageNurse or Admin role
+    const hasAccess = user.roles.includes('Admin') || user.roles.includes('TriageNurse');
+    if (!hasAccess) { router.push('/dashboard'); return; }
 
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/config/weights`, {
       headers: { Authorization: `Bearer ${user.token}` }
@@ -77,50 +80,50 @@ export default function ConfigsPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-950 p-6">
+    <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-            <Settings className="w-5 h-5 text-blue-400" />
+          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+            <Settings className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">Priority Formula Configuration</h1>
-            <p className="text-gray-400 text-sm">Adjust weights to reorder the live queue in real-time</p>
+            <h1 className="text-xl font-bold text-slate-900">Priority Formula Configuration</h1>
+            <p className="text-slate-500 text-sm">Adjust weights to reorder the live queue in real-time</p>
           </div>
         </div>
 
         {/* Info Banner */}
-        <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-6">
-          <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-          <p className="text-blue-300 text-sm">
+        <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
+          <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+          <p className="text-blue-700 text-sm">
             Weights must sum to exactly 100%. Saving will immediately recalculate all active referral scores and 
             push the re-sorted queue to all connected sessions via SignalR.
           </p>
         </div>
 
         {/* Formula Preview */}
-        <div className="bg-gray-900/60 border border-white/10 rounded-xl p-5 mb-6">
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Priority Formula</p>
-          <code className="text-blue-300 text-sm">
+        <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6 shadow-sm">
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">Priority Formula</p>
+          <code className="text-blue-600 text-sm font-semibold">
             Score = ({weights.weight_urgency}% × Urgency) + ({weights.weight_waittime}% × WaitTime) + ({weights.weight_patient}% × PatientAge)
           </code>
         </div>
 
         {/* Sliders */}
         {loading ? (
-          <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-blue-400" /></div>
+          <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>
         ) : (
           <div className="space-y-6 mb-8">
             {Object.entries(keyLabels).map(([key, meta]) => (
-              <div key={key} className="bg-gray-900/60 border border-white/10 rounded-xl p-5">
+              <div key={key} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className="text-white font-semibold text-sm">{meta.label}</p>
-                    <p className="text-gray-400 text-xs mt-0.5">{meta.desc}</p>
+                    <p className="text-slate-900 font-bold text-sm">{meta.label}</p>
+                    <p className="text-slate-500 text-xs mt-0.5">{meta.desc}</p>
                   </div>
                   <div className="text-right">
-                    <span className={`text-2xl font-bold bg-gradient-to-r ${meta.color} bg-clip-text text-transparent`}>
+                    <span className={`text-2xl font-extrabold bg-gradient-to-r ${meta.color} bg-clip-text text-transparent`}>
                       {weights[key]}%
                     </span>
                   </div>
@@ -133,9 +136,9 @@ export default function ConfigsPage() {
                     step={5}
                     value={weights[key]}
                     onChange={e => handleChange(key, parseInt(e.target.value))}
-                    className="w-full h-2 rounded-full appearance-none cursor-pointer bg-gray-700 accent-blue-500"
+                    className="w-full h-2 rounded-full appearance-none cursor-pointer bg-slate-100 accent-blue-600"
                   />
-                  <div className="flex justify-between text-xs text-gray-600 mt-1">
+                  <div className="flex justify-between text-xs text-slate-400 font-semibold mt-1">
                     <span>0%</span><span>50%</span><span>100%</span>
                   </div>
                 </div>
@@ -147,26 +150,26 @@ export default function ConfigsPage() {
         {/* Total indicator */}
         <div className={`flex items-center justify-between p-4 rounded-xl mb-6 border ${
           isValid
-            ? 'bg-emerald-500/10 border-emerald-500/30'
-            : 'bg-red-500/10 border-red-500/30'
+            ? 'bg-emerald-50 border-emerald-100'
+            : 'bg-red-50 border-red-100'
         }`}>
           <div className="flex items-center gap-2">
             {isValid
-              ? <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              : <AlertCircle className="w-4 h-4 text-red-400" />}
-            <span className={`text-sm font-medium ${isValid ? 'text-emerald-400' : 'text-red-400'}`}>
+              ? <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              : <AlertCircle className="w-4 h-4 text-red-600" />}
+            <span className={`text-sm font-semibold ${isValid ? 'text-emerald-700' : 'text-red-700'}`}>
               {isValid ? 'Weights are valid (sum = 100%)' : `Weights sum to ${total}% — must equal 100%`}
             </span>
           </div>
-          <span className={`text-xl font-bold ${isValid ? 'text-emerald-400' : 'text-red-400'}`}>{total}%</span>
+          <span className={`text-xl font-bold ${isValid ? 'text-emerald-600' : 'text-red-600'}`}>{total}%</span>
         </div>
 
         {/* Toast */}
         {toast && (
-          <div className={`flex items-center gap-2 p-4 rounded-xl mb-4 border text-sm ${
+          <div className={`flex items-center gap-2 p-4 rounded-xl mb-4 border text-sm font-semibold ${
             toast.type === 'success'
-              ? 'bg-emerald-900/60 border-emerald-500/40 text-emerald-300'
-              : 'bg-red-900/60 border-red-500/40 text-red-300'
+              ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
+              : 'bg-red-50 border-red-100 text-red-700'
           }`}>
             {toast.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
             {toast.msg}
@@ -177,7 +180,7 @@ export default function ConfigsPage() {
         <button
           onClick={handleSave}
           disabled={!isValid || saving}
-          className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-md shadow-blue-500/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           {saving ? 'Saving & Broadcasting...' : 'Save & Apply Weights'}

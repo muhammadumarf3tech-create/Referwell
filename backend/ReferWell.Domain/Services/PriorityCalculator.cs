@@ -17,14 +17,13 @@ public static class PriorityCalculator
         double weightWaitTime = 30,
         double weightPatient = 20)
     {
-        // Normalize urgency (1-4) to 0-100 scale
+        // Normalize urgency (1-3) to 0-100 scale
         double urgencyScore = urgency switch
         {
-            UrgencyLevel.Routine   => 25,
-            UrgencyLevel.Soon      => 50,
-            UrgencyLevel.Urgent    => 75,
-            UrgencyLevel.Emergency => 100,
-            _                      => 0
+            UrgencyLevel.Routine    => 33,
+            UrgencyLevel.SemiUrgent => 66,
+            UrgencyLevel.Urgent     => 100,
+            _                       => 0
         };
 
         // Wait time in days, capped at 90 days → normalized 0-100

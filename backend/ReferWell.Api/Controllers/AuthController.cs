@@ -23,13 +23,14 @@ public class AuthController : ControllerBase
     }
 
     public record LoginRequest(string Email, string Password);
-    public record LoginResponse(string Token, string FullName, string Email, string Role);
+    public record LoginResponse(string Token, string FullName, string Email, List<string> Roles, string? Title);
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         // OWASP: Parameterized query via LINQ (EF Core)
         var user = await _db.Users
+            .Include(u => u.UserRoles)
             .FirstOrDefaultAsync(u => u.Email == request.Email && u.IsActive);
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
@@ -43,7 +44,7 @@ public class AuthController : ControllerBase
         await _db.SaveChangesAsync();
 
         var token = GenerateJwtToken(user);
-        return Ok(new LoginResponse(token, user.FullName, user.Email, user.Role.ToString()));
+        return Ok(new LoginResponse(token, user.FullName, user.Email, user.UserRoles.Select(ur => ur.Role.ToString()).ToList(), user.Title));
     }
 
     private string GenerateJwtToken(ApplicationUser user)
@@ -52,14 +53,18 @@ public class AuthController : ControllerBase
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig["Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim("fullName", user.FullName),
-            new Claim(ClaimTypes.Role, user.Role.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
+
+        foreach (var ur in user.UserRoles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, ur.Role.ToString()));
+        }
 
         var expireMinutes = int.Parse(jwtConfig["ExpireMinutes"] ?? "480");
         var token = new JwtSecurityToken(
