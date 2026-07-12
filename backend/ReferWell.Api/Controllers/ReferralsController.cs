@@ -62,9 +62,13 @@ public class ReferralsController : ControllerBase
         [FromQuery] string? sortBy,
         [FromQuery] DateTime? fromDate,
         [FromQuery] DateTime? toDate,
+        [FromQuery] bool? slaBreach,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 15)
     {
+        // Keep SlaBreach in sync for overdue Received referrals (time-to-first-triage SLA)
+        await SyncSlaBreachesAsync();
+
         var query = _db.Referrals
             .Include(r => r.CreatedByUser)
             .Include(r => r.ClaimedByUser)
@@ -131,14 +135,20 @@ public class ReferralsController : ControllerBase
 
         if (fromDate.HasValue)
         {
-            var fromUtc = DateTime.SpecifyKind(fromDate.Value.Date, DateTimeKind.Utc);
-            query = query.Where(r => r.ReceivedAt >= fromUtc);
+            var fromLocal = DateTime.SpecifyKind(fromDate.Value.Date, DateTimeKind.Local);
+            query = query.Where(r => r.ReceivedAt >= fromLocal);
         }
 
         if (toDate.HasValue)
         {
-            var toUtc = DateTime.SpecifyKind(toDate.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
-            query = query.Where(r => r.ReceivedAt <= toUtc);
+            var toLocal = DateTime.SpecifyKind(toDate.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Local);
+            query = query.Where(r => r.ReceivedAt <= toLocal);
+        }
+
+        if (slaBreach == true)
+        {
+            // Paused = waiting on patient → not an active breach for filters/stats
+            query = query.Where(r => r.SlaBreach && !r.SlaPaused);
         }
 
         // Order before paginating
@@ -154,8 +164,8 @@ public class ReferralsController : ControllerBase
         // Count stats *before* paginating but *after* applying filters
         var totalCount = await query.CountAsync();
         var activeCount = await query.CountAsync(r => r.Status != ReferralStatus.Completed && r.Status != ReferralStatus.Declined);
-        var urgentCount = await query.CountAsync(r => (r.Urgency == UrgencyLevel.Urgent || r.Urgency == UrgencyLevel.Emergency) && r.Status != ReferralStatus.Completed);
-        var breachedCount = await query.CountAsync(r => r.SlaBreach);
+        var urgentCount = await query.CountAsync(r => r.Urgency == UrgencyLevel.Urgent && r.Status != ReferralStatus.Completed);
+        var breachedCount = await query.CountAsync(r => r.SlaBreach && !r.SlaPaused);
 
         var referrals = await query
             .Skip((page - 1) * pageSize)
@@ -166,7 +176,7 @@ public class ReferralsController : ControllerBase
                 r.CaseNo,
                 PatientId = r.PatientId,
                 PatientName = r.Patient != null ? r.Patient.Name : string.Empty,
-                PatientDateOfBirth = r.Patient != null ? r.Patient.DateOfBirth : DateTime.UtcNow,
+                PatientDateOfBirth = r.Patient != null ? r.Patient.DateOfBirth : DateTime.Now,
                 r.SpecialistType,
                 r.Reason,
                 Urgency = r.Urgency.ToString(),
@@ -175,6 +185,9 @@ public class ReferralsController : ControllerBase
                 r.ReceivedAt,
                 r.SlaDeadline,
                 r.SlaBreach,
+                r.SlaPaused,
+                r.SlaPausedAt,
+                r.SlaPauseReason,
                 r.CreatedAt,
                 r.RowVersion,
                 CreatedByUser = r.CreatedByUser == null ? null : new { r.CreatedByUser.FullName, r.CreatedByUser.Email, r.CreatedByUser.Title },
@@ -244,7 +257,7 @@ public class ReferralsController : ControllerBase
         }
         var caseNo = $"Ref-{nextIndex:D6}";
 
-        var receivedAt = DateTime.UtcNow;
+        var receivedAt = DateTime.Now;
         var referral = new Referral
         {
             PatientId = request.PatientId,
@@ -302,12 +315,13 @@ public class ReferralsController : ControllerBase
         referral.Reason = request.Reason;
         referral.Urgency = request.Urgency;
         referral.AssignedToUserId = request.AssignedToUserId;
-        referral.UpdatedAt = DateTime.UtcNow;
+        referral.UpdatedAt = DateTime.Now;
 
         var weights = await GetWeights();
         referral.SlaDeadline = Referral.CalculateSlaDeadline(referral.Urgency, referral.ReceivedAt);
+        referral.EvaluateSlaBreach();
         referral.PriorityScore = PriorityCalculator.Calculate(
-            referral.Urgency, referral.ReceivedAt, referral.Patient?.DateOfBirth ?? DateTime.UtcNow,
+            referral.Urgency, referral.ReceivedAt, referral.Patient?.DateOfBirth ?? DateTime.Now,
             weights.urgency, weights.waittime, weights.patient);
 
         _db.AuditLogs.Add(new AuditLog
@@ -331,7 +345,7 @@ public class ReferralsController : ControllerBase
 
     // ── POST /api/referrals/{id}/claim ────────────────────────────────────────
     [HttpPost("{id}/claim")]
-    [Authorize(Roles = "TriageNurse,Admin")]
+    [Authorize(Roles = "TriageNurse,Admin,GP")]
     public async Task<IActionResult> ClaimReferral(Guid id, [FromBody] ConcurrencyRequest req)
     {
         var referral = await _db.Referrals.FindAsync(id);
@@ -365,7 +379,7 @@ public class ReferralsController : ControllerBase
 
     // ── POST /api/referrals/{id}/release ─────────────────────────────────────
     [HttpPost("{id}/release")]
-    [Authorize(Roles = "TriageNurse,Admin")]
+    [Authorize(Roles = "TriageNurse,Admin,GP")]
     public async Task<IActionResult> ReleaseReferral(Guid id)
     {
         var referral = await _db.Referrals.FindAsync(id);
@@ -380,7 +394,7 @@ public class ReferralsController : ControllerBase
 
     // ── POST /api/referrals/{id}/transition ───────────────────────────────────
     [HttpPost("{id}/transition")]
-    [Authorize(Roles = "TriageNurse,Admin")]
+    [Authorize(Roles = "TriageNurse,Admin,GP")]
     public async Task<IActionResult> TransitionReferral(Guid id, [FromBody] TransitionRequest req)
     {
         var referral = await _db.Referrals.FindAsync(id);
@@ -416,6 +430,102 @@ public class ReferralsController : ControllerBase
         catch (Exception)
         {
             return StatusCode(500, new { message = "Unable to update status. Please try again." });
+        }
+    }
+
+    // ── POST /api/referrals/{id}/pause-sla ────────────────────────────────────
+    [HttpPost("{id}/pause-sla")]
+    [Authorize(Roles = "TriageNurse,Admin,GP")]
+    public async Task<IActionResult> PauseSla(Guid id, [FromBody] PauseSlaRequest req)
+    {
+        var referral = await _db.Referrals.FindAsync(id);
+        if (referral == null) return NotFound();
+
+        if (referral.ClaimedByUserId.HasValue && referral.ClaimedByUserId != CurrentUserId)
+            return Conflict(new { message = "This referral is claimed by another user. Claim or release it before pausing SLA." });
+
+        _db.Entry(referral).Property(r => r.RowVersion).OriginalValue = req.RowVersion;
+
+        try
+        {
+            referral.PauseSla(req.Reason ?? "WaitingOnPatient");
+
+            _db.AuditLogs.Add(new AuditLog
+            {
+                ReferralId = id,
+                PerformedByUserId = CurrentUserId,
+                Action = "SlaPaused",
+                Notes = referral.SlaPauseReason
+            });
+
+            await _db.SaveChangesAsync();
+            await _hub.Clients.Group("QueueGroup").SendAsync("ReferralUpdated", id);
+            return Ok(new
+            {
+                message = "SLA paused (waiting on patient).",
+                rowVersion = referral.RowVersion,
+                slaPaused = referral.SlaPaused,
+                slaPausedAt = referral.SlaPausedAt,
+                slaPauseReason = referral.SlaPauseReason,
+                slaDeadline = referral.SlaDeadline
+            });
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict(new { message = "Unable to pause SLA: the referral was modified by another user. Please refresh and try again." });
+        }
+        catch (InvalidSlaPauseException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    // ── POST /api/referrals/{id}/resume-sla ───────────────────────────────────
+    [HttpPost("{id}/resume-sla")]
+    [Authorize(Roles = "TriageNurse,Admin,GP")]
+    public async Task<IActionResult> ResumeSla(Guid id, [FromBody] ConcurrencyRequest req)
+    {
+        var referral = await _db.Referrals.FindAsync(id);
+        if (referral == null) return NotFound();
+
+        if (referral.ClaimedByUserId.HasValue && referral.ClaimedByUserId != CurrentUserId)
+            return Conflict(new { message = "This referral is claimed by another user. Claim or release it before resuming SLA." });
+
+        _db.Entry(referral).Property(r => r.RowVersion).OriginalValue = req.RowVersion;
+
+        try
+        {
+            var pausedAt = referral.SlaPausedAt;
+            referral.ResumeSla();
+
+            _db.AuditLogs.Add(new AuditLog
+            {
+                ReferralId = id,
+                PerformedByUserId = CurrentUserId,
+                Action = "SlaResumed",
+                Notes = pausedAt.HasValue
+                    ? $"Paused since {pausedAt:dd MMM yyyy HH:mm}; deadline extended to {referral.SlaDeadline:dd MMM yyyy HH:mm}"
+                    : null
+            });
+
+            await _db.SaveChangesAsync();
+            await _hub.Clients.Group("QueueGroup").SendAsync("ReferralUpdated", id);
+            return Ok(new
+            {
+                message = "SLA resumed; deadline extended by the paused duration.",
+                rowVersion = referral.RowVersion,
+                slaPaused = referral.SlaPaused,
+                slaDeadline = referral.SlaDeadline,
+                slaBreach = referral.SlaBreach
+            });
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict(new { message = "Unable to resume SLA: the referral was modified by another user. Please refresh and try again." });
+        }
+        catch (InvalidSlaPauseException ex)
+        {
+            return BadRequest(new { message = ex.Message });
         }
     }
 
@@ -517,6 +627,21 @@ public class ReferralsController : ControllerBase
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+    private async Task SyncSlaBreachesAsync()
+    {
+        var now = DateTime.Now;
+        var overdue = await _db.Referrals
+            .Where(r => r.Status == ReferralStatus.Received && !r.SlaBreach && !r.SlaPaused && r.SlaDeadline < now)
+            .ToListAsync();
+
+        if (overdue.Count == 0) return;
+
+        foreach (var referral in overdue)
+            referral.EvaluateSlaBreach(now);
+
+        await _db.SaveChangesAsync();
+    }
+
     private async Task<(double urgency, double waittime, double patient)> GetWeights()
     {
         var configs = await _db.SystemConfigs.ToListAsync();
@@ -534,3 +659,4 @@ public record UpdateReferralRequest(
 
 public record ConcurrencyRequest(byte[] RowVersion);
 public record TransitionRequest(ReferralStatus NewStatus, byte[] RowVersion, string? Notes);
+public record PauseSlaRequest(byte[] RowVersion, string? Reason = "WaitingOnPatient");

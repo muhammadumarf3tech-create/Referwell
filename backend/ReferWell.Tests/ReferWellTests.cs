@@ -12,13 +12,13 @@ public class ReferWellTests
     public void PriorityCalculator_ShouldCalculateCorrectScores()
     {
         // Arrange
-        var receivedAt = DateTime.UtcNow;
-        var dob = DateTime.UtcNow.AddYears(-40); // 40 years old
+        var receivedAt = DateTime.Now;
+        var dob = DateTime.Now.AddYears(-40); // 40 years old
 
         // Act
-        // Emergency (100 score) at weight 50% + 0 days wait at weight 30% + 40/90 age (44.4 score) at weight 20%
+        // Urgent (100 score) at weight 50% + 0 days wait at weight 30% + 40/90 age (44.4 score) at weight 20%
         var score = PriorityCalculator.Calculate(
-            UrgencyLevel.Emergency,
+            UrgencyLevel.Urgent,
             receivedAt,
             dob,
             weightUrgency: 50,
@@ -95,14 +95,13 @@ public class ReferWellTests
     }
 
     [Theory]
-    [InlineData(UrgencyLevel.Emergency, 4)]
     [InlineData(UrgencyLevel.Urgent, 24)]
-    [InlineData(UrgencyLevel.Soon, 168)] // 7 days * 24
+    [InlineData(UrgencyLevel.SemiUrgent, 168)] // 7 days * 24
     [InlineData(UrgencyLevel.Routine, 720)] // 30 days * 24
     public void Referral_CalculateSlaDeadline_ShouldReturnCorrectDeadline(UrgencyLevel urgency, int expectedHours)
     {
         // Arrange
-        var receivedAt = DateTime.UtcNow;
+        var receivedAt = DateTime.Now;
 
         // Act
         var deadline = Referral.CalculateSlaDeadline(urgency, receivedAt);
@@ -110,5 +109,128 @@ public class ReferWellTests
         // Assert
         var diff = deadline - receivedAt;
         Assert.Equal(expectedHours, Math.Round(diff.TotalHours));
+    }
+
+    [Fact]
+    public void Referral_EvaluateSlaBreach_MarksReceivedPastDeadline()
+    {
+        var now = DateTime.Now;
+        var referral = new Referral
+        {
+            Status = ReferralStatus.Received,
+            ReceivedAt = now.AddHours(-25),
+            SlaDeadline = now.AddHours(-1),
+            SlaBreach = false
+        };
+
+        var newlyBreached = referral.EvaluateSlaBreach(now);
+
+        Assert.True(newlyBreached);
+        Assert.True(referral.SlaBreach);
+    }
+
+    [Fact]
+    public void Referral_EvaluateSlaBreach_DoesNotMarkWhenAlreadyTriaged()
+    {
+        var now = DateTime.Now;
+        var referral = new Referral
+        {
+            Status = ReferralStatus.Triaged,
+            ReceivedAt = now.AddHours(-25),
+            SlaDeadline = now.AddHours(-1),
+            SlaBreach = false
+        };
+
+        var newlyBreached = referral.EvaluateSlaBreach(now);
+
+        Assert.False(newlyBreached);
+        Assert.False(referral.SlaBreach);
+    }
+
+    [Fact]
+    public void Referral_EvaluateSlaBreach_ClearsWhenDeadlineExtended()
+    {
+        var now = DateTime.Now;
+        var referral = new Referral
+        {
+            Status = ReferralStatus.Received,
+            ReceivedAt = now.AddHours(-2),
+            SlaDeadline = now.AddHours(22),
+            SlaBreach = true
+        };
+
+        referral.EvaluateSlaBreach(now);
+
+        Assert.False(referral.SlaBreach);
+    }
+
+    [Fact]
+    public void Referral_PauseSla_FreezesClockAndSkipsBreach()
+    {
+        var now = DateTime.Now;
+        var referral = new Referral
+        {
+            Status = ReferralStatus.Received,
+            ReceivedAt = now.AddHours(-25),
+            SlaDeadline = now.AddHours(-1),
+            SlaBreach = false
+        };
+
+        referral.PauseSla("WaitingOnPatient", now);
+
+        Assert.True(referral.SlaPaused);
+        Assert.Equal("WaitingOnPatient", referral.SlaPauseReason);
+        Assert.False(referral.EvaluateSlaBreach(now.AddHours(2)));
+        Assert.False(referral.SlaBreach);
+    }
+
+    [Fact]
+    public void Referral_ResumeSla_ExtendsDeadlineByPausedDuration()
+    {
+        var now = DateTime.Now;
+        var originalDeadline = now.AddHours(5);
+        var referral = new Referral
+        {
+            Status = ReferralStatus.Received,
+            ReceivedAt = now.AddHours(-1),
+            SlaDeadline = originalDeadline,
+            SlaBreach = false
+        };
+
+        referral.PauseSla("WaitingOnPatient", now);
+        referral.ResumeSla(now.AddHours(3));
+
+        Assert.False(referral.SlaPaused);
+        Assert.Null(referral.SlaPausedAt);
+        Assert.Equal(originalDeadline.AddHours(3), referral.SlaDeadline);
+    }
+
+    [Fact]
+    public void Referral_PauseSla_RejectsWhenAlreadyPausedOrClosed()
+    {
+        var referral = new Referral { Status = ReferralStatus.Received, SlaDeadline = DateTime.Now.AddDays(1) };
+        referral.PauseSla();
+        Assert.Throws<InvalidSlaPauseException>(() => referral.PauseSla());
+
+        var closed = new Referral { Status = ReferralStatus.Completed, SlaDeadline = DateTime.Now.AddDays(1) };
+        Assert.Throws<InvalidSlaPauseException>(() => closed.PauseSla());
+    }
+
+    [Fact]
+    public void Referral_TransitionToCompleted_ClearsPauseWithoutExtending()
+    {
+        var now = DateTime.Now;
+        var deadline = now.AddHours(4);
+        var referral = new Referral
+        {
+            Status = ReferralStatus.Booked,
+            SlaDeadline = deadline
+        };
+        referral.PauseSla("WaitingOnPatient", now);
+        referral.TransitionTo(ReferralStatus.Completed);
+
+        Assert.Equal(ReferralStatus.Completed, referral.Status);
+        Assert.False(referral.SlaPaused);
+        Assert.Equal(deadline, referral.SlaDeadline);
     }
 }

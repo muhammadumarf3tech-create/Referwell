@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using ReferWell.Api.Authorization;
 using ReferWell.Domain.Services;
 using ReferWell.Infrastructure.Data;
 using ReferWell.Infrastructure.Hubs;
@@ -10,7 +11,8 @@ namespace ReferWell.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin,TriageNurse")]
+[Authorize]
+[MenuAuthorize("Priority Config")]
 public class ConfigController : ControllerBase
 {
     private readonly AppDbContext _db;
@@ -43,7 +45,7 @@ public class ConfigController : ControllerBase
         void SetConfig(string key, double value)
         {
             var c = configs.FirstOrDefault(x => x.Key == key);
-            if (c != null) { c.Value = value.ToString(); c.UpdatedAt = DateTime.UtcNow; }
+            if (c != null) { c.Value = value.ToString(); c.UpdatedAt = DateTime.Now; }
         }
 
         SetConfig("weight_urgency", request.WeightUrgency);
@@ -60,7 +62,7 @@ public class ConfigController : ControllerBase
         foreach (var r in referrals)
         {
             r.PriorityScore = PriorityCalculator.Calculate(
-                r.Urgency, r.ReceivedAt, r.Patient?.DateOfBirth ?? DateTime.UtcNow,
+                r.Urgency, r.ReceivedAt, r.Patient?.DateOfBirth ?? DateTime.Now,
                 request.WeightUrgency, request.WeightWaittime, request.WeightPatient);
         }
 

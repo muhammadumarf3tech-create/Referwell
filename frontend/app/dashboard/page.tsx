@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation';
 import * as signalR from '@microsoft/signalr';
 import {
   Search, Plus, RefreshCw, Filter, User, Clock, AlertTriangle, CheckCircle2, XCircle,
-  Loader2, Lock, Unlock, TrendingUp, X, Paperclip, Download, Pencil, Save, ChevronDown, ChevronUp, Activity, Eye
+  Loader2, Lock, Unlock, TrendingUp, X, Paperclip, Download, Pencil, Save, ChevronDown, ChevronUp, Activity, Eye, Pause, Play
 } from 'lucide-react';
+import SlaTimer from '@/components/SlaTimer';
 
 interface MultiSelectProps {
   label: string;
@@ -147,6 +148,9 @@ interface Referral {
   receivedAt: string;
   slaDeadline: string;
   slaBreach: boolean;
+  slaPaused?: boolean;
+  slaPausedAt?: string | null;
+  slaPauseReason?: string | null;
   rowVersion: string;
   createdByUser?: { fullName: string; email: string; title?: string };
   claimedByUser?: { fullName: string; email: string; title?: string } | null;
@@ -167,10 +171,9 @@ interface User {
 }
 
 const urgencyColors: Record<string, string> = {
-  Emergency: 'bg-red-50 text-red-600 border-red-200',
-  Urgent:    'bg-orange-50 text-orange-600 border-orange-200',
-  Soon:      'bg-yellow-50 text-yellow-600 border-yellow-200',
-  Routine:   'bg-slate-50 text-slate-600 border-slate-200',
+  Urgent:     'bg-orange-50 text-orange-600 border-orange-200',
+  SemiUrgent: 'bg-yellow-50 text-yellow-600 border-yellow-200',
+  Routine:    'bg-slate-50 text-slate-600 border-slate-200',
 };
 
 const statusColors: Record<string, string> = {
@@ -234,7 +237,7 @@ const statusTransitions: Record<string, string[]> = {
 };
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -248,6 +251,7 @@ export default function DashboardPage() {
   const [sortBy, setSortBy] = useState('priority');
   const [filterFromDate, setFilterFromDate] = useState('');
   const [filterToDate, setFilterToDate] = useState('');
+  const [filterSlaBreach, setFilterSlaBreach] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -311,6 +315,7 @@ export default function DashboardPage() {
       if (caseNoSearch) params.set('caseNo', caseNoSearch);
       if (filterFromDate) params.set('fromDate', filterFromDate);
       if (filterToDate) params.set('toDate', filterToDate);
+      if (filterSlaBreach) params.set('slaBreach', 'true');
       if (sortBy) params.set('sortBy', sortBy);
       params.set('page', pageToFetch.toString());
       params.set('pageSize', '15');
@@ -335,7 +340,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, filterStatus, filterUrgency, filterAssignee, patientSearch, caseNoSearch, currentPage, sortBy, filterFromDate, filterToDate]);
+  }, [user, filterStatus, filterUrgency, filterAssignee, patientSearch, caseNoSearch, currentPage, sortBy, filterFromDate, filterToDate, filterSlaBreach]);
 
   const fetchUsers = useCallback(async () => {
     if (!user) return;
@@ -352,25 +357,26 @@ export default function DashboardPage() {
     }
   }, [user]);
 
-  // Debounced search/filter fetcher
+  // Debounced search/filter/page fetcher
   useEffect(() => {
     if (!user) return;
     const delayDebounceFn = setTimeout(() => {
-      fetchReferrals(1);
+      fetchReferrals(currentPage);
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [filterStatus, filterUrgency, filterAssignee, patientSearch, caseNoSearch, sortBy, filterFromDate, filterToDate]);
+  }, [user, filterStatus, filterUrgency, filterAssignee, patientSearch, caseNoSearch, sortBy, filterFromDate, filterToDate, filterSlaBreach, currentPage]);
 
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterStatus, filterUrgency, filterAssignee, patientSearch, caseNoSearch, sortBy, filterFromDate, filterToDate]);
+  }, [filterStatus, filterUrgency, filterAssignee, patientSearch, caseNoSearch, sortBy, filterFromDate, filterToDate, filterSlaBreach]);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!user) { router.push('/login'); return; }
     fetchUsers();
-  }, [user, router, fetchUsers]);
+  }, [user, isLoading, router, fetchUsers]);
 
   // Create a ref for fetchReferrals to avoid stale bindings in SignalR callbacks
   const fetchReferralsRef = useRef(fetchReferrals);
@@ -391,6 +397,13 @@ export default function DashboardPage() {
     hub.on('ReferralReleased', () => { fetchReferralsRef.current(); });
     hub.on('ReferralUpdated', () => { fetchReferralsRef.current(); });
     hub.on('QueueResorted', () => { fetchReferralsRef.current(); showToast('success', 'Priority weights updated — queue resorted'); });
+    hub.on('SlaBreached', (payload: { caseNo?: string; patientName?: string }) => {
+      fetchReferralsRef.current();
+      const label = payload?.caseNo
+        ? `${payload.caseNo}${payload.patientName ? ` — ${payload.patientName}` : ''}`
+        : 'A referral';
+      showToast('warning', `SLA BREACH: ${label} exceeded the triage deadline with no action`);
+    });
 
     hub.start()
       .then(() => hub.invoke('JoinQueue'))
@@ -450,6 +463,65 @@ export default function DashboardPage() {
       }
     } catch (err) {
       showToast('error', 'Unable to release referral: ' + (err instanceof Error ? err.message : 'Network error'));
+    }
+  };
+
+  const pauseSla = async (r: Referral) => {
+    if (!user) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/referrals/${r.id}/pause-sla`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${user.token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rowVersion: r.rowVersion, reason: 'WaitingOnPatient' }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('success', 'SLA paused — waiting on patient.');
+        setReferrals(prev => prev.map(item => item.id === r.id ? {
+          ...item,
+          rowVersion: data.rowVersion,
+          slaPaused: true,
+          slaPausedAt: data.slaPausedAt ?? new Date().toISOString(),
+          slaPauseReason: data.slaPauseReason ?? 'WaitingOnPatient',
+          slaDeadline: data.slaDeadline ?? item.slaDeadline,
+        } : item));
+        fetchReferrals();
+      } else {
+        showToast('error', data.message || 'Could not pause SLA.');
+        fetchReferrals();
+      }
+    } catch (err) {
+      showToast('error', 'Unable to pause SLA: ' + (err instanceof Error ? err.message : 'Network error'));
+    }
+  };
+
+  const resumeSla = async (r: Referral) => {
+    if (!user) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/referrals/${r.id}/resume-sla`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${user.token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rowVersion: r.rowVersion }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('success', 'SLA resumed — deadline extended by paused time.');
+        setReferrals(prev => prev.map(item => item.id === r.id ? {
+          ...item,
+          rowVersion: data.rowVersion,
+          slaPaused: false,
+          slaPausedAt: null,
+          slaPauseReason: null,
+          slaDeadline: data.slaDeadline ?? item.slaDeadline,
+          slaBreach: data.slaBreach ?? item.slaBreach,
+        } : item));
+        fetchReferrals();
+      } else {
+        showToast('error', data.message || 'Could not resume SLA.');
+        fetchReferrals();
+      }
+    } catch (err) {
+      showToast('error', 'Unable to resume SLA: ' + (err instanceof Error ? err.message : 'Network error'));
     }
   };
 
@@ -529,7 +601,7 @@ export default function DashboardPage() {
     setEditSaving(true);
 
     const urgencyMap: Record<string, number> = {
-      'Routine': 1, 'Soon': 2, 'Urgent': 3, 'Emergency': 4
+      'Routine': 1, 'SemiUrgent': 2, 'Urgent': 3
     };
 
     try {
@@ -594,6 +666,14 @@ export default function DashboardPage() {
 
   const isGP = user?.roles.includes('GP') && !user?.roles.includes('Admin') && !user?.roles.includes('TriageNurse');
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   if (!user) return null;
 
   return (
@@ -637,15 +717,33 @@ export default function DashboardPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Total Referrals', value: stats.total, color: 'text-blue-600', bg: 'bg-white border-blue-100' },
-            { label: 'Active Triages', value: stats.active, color: 'text-emerald-600', bg: 'bg-white border-emerald-100' },
-            { label: 'High Priority', value: stats.urgent, color: 'text-orange-600', bg: 'bg-white border-orange-100' },
-            { label: 'SLA Breached', value: stats.breached, color: 'text-red-600', bg: 'bg-white border-red-100' },
+            { label: 'Total Referrals', value: stats.total, color: 'text-blue-600', bg: 'bg-white border-blue-100', onClick: undefined as (() => void) | undefined },
+            { label: 'Active Triages', value: stats.active, color: 'text-emerald-600', bg: 'bg-white border-emerald-100', onClick: undefined as (() => void) | undefined },
+            { label: 'High Priority', value: stats.urgent, color: 'text-orange-600', bg: 'bg-white border-orange-100', onClick: undefined as (() => void) | undefined },
+            {
+              label: 'SLA Breached',
+              value: stats.breached,
+              color: 'text-red-600',
+              bg: filterSlaBreach ? 'bg-red-50 border-red-300 ring-2 ring-red-100' : 'bg-white border-red-100',
+              onClick: () => setFilterSlaBreach(v => !v),
+            },
           ].map(s => (
-            <div key={s.label} className={`${s.bg} border rounded-xl p-4 shadow-sm`}>
+            <button
+              key={s.label}
+              type="button"
+              onClick={s.onClick}
+              disabled={!s.onClick}
+              className={`${s.bg} border rounded-xl p-4 shadow-sm text-left transition-all ${s.onClick ? 'cursor-pointer hover:border-red-300' : 'cursor-default'}`}
+              title={s.onClick ? (filterSlaBreach ? 'Clear SLA breach filter' : 'Filter to SLA-breached referrals') : undefined}
+            >
               <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">{s.label}</p>
               <p className={`text-2xl font-extrabold ${s.color}`}>{s.value}</p>
-            </div>
+              {s.label === 'SLA Breached' && (
+                <p className="text-[10px] text-red-500 font-bold mt-1">
+                  {filterSlaBreach ? 'Filter active — click to clear' : 'Click to filter breaches'}
+                </p>
+              )}
+            </button>
           ))}
         </div>
 
@@ -719,9 +817,8 @@ export default function DashboardPage() {
             <MultiSelect
               label="Urgency"
               options={[
-                { value: 'Emergency', label: 'Emergency' },
                 { value: 'Urgent', label: 'Urgent' },
-                { value: 'Soon', label: 'Soon' },
+                { value: 'SemiUrgent', label: 'Semi-Urgent' },
                 { value: 'Routine', label: 'Routine' },
               ]}
               selectedValues={filterUrgency}
@@ -741,6 +838,19 @@ export default function DashboardPage() {
               />
             )}
 
+            <button
+              type="button"
+              onClick={() => setFilterSlaBreach(v => !v)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border shadow-sm transition-all ${
+                filterSlaBreach
+                  ? 'bg-red-50 border-red-300 text-red-700 ring-2 ring-red-100'
+                  : 'bg-white border-slate-200 text-slate-600 hover:border-red-200'
+              }`}
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              SLA Breach
+            </button>
+
             {/* Sort Dropdown */}
             <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-600 focus-within:ring-2 focus-within:ring-blue-500/20 font-bold shadow-sm select-none">
               <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Sort:</span>
@@ -754,7 +864,7 @@ export default function DashboardPage() {
               </select>
             </div>
 
-            {(filterStatus.length > 0 || filterUrgency.length > 0 || filterAssignee.length > 0 || patientSearch || caseNoSearch || sortBy !== 'priority' || filterFromDate || filterToDate) && (
+            {(filterStatus.length > 0 || filterUrgency.length > 0 || filterAssignee.length > 0 || patientSearch || caseNoSearch || sortBy !== 'priority' || filterFromDate || filterToDate || filterSlaBreach) && (
               <button
                 onClick={() => {
                   setFilterStatus([]);
@@ -765,6 +875,7 @@ export default function DashboardPage() {
                   setSortBy('priority');
                   setFilterFromDate('');
                   setFilterToDate('');
+                  setFilterSlaBreach(false);
                 }}
                 className="text-xs text-red-600 hover:text-red-800 font-bold flex items-center gap-1 ml-auto bg-red-50 hover:bg-red-100/60 px-3 py-1.5 rounded-lg border border-red-100 transition-all"
               >
@@ -790,7 +901,8 @@ export default function DashboardPage() {
               {referrals.map((r, idx) => (
                 <div key={r.id}
                   className={`bg-white border rounded-xl overflow-hidden transition-all duration-200 shadow-sm ${
-                    r.slaBreach ? 'border-red-300 ring-2 ring-red-100 shadow-md' : 'border-slate-200 hover:border-slate-300'
+                    r.slaPaused ? 'border-violet-300 ring-2 ring-violet-100 shadow-md' :
+                    r.slaBreach && !r.slaPaused ? 'border-red-300 ring-2 ring-red-100 shadow-md' : 'border-slate-200 hover:border-slate-300'
                   }`}>
                   {/* Row Header */}
                   <div
@@ -810,19 +922,29 @@ export default function DashboardPage() {
                           {r.caseNo}
                         </span>
                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] border font-bold ${urgencyColors[r.urgency]}`}>
-                          {r.urgency}
+                          {r.urgency === 'SemiUrgent' ? 'Semi-Urgent' : r.urgency}
                         </span>
                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] border font-bold ${statusColors[r.status]}`}>
                           {statusIcons[r.status]}
                           {r.status}
                         </span>
-                        {r.slaBreach && (
+                        {r.slaBreach && !r.slaPaused && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-red-100 text-red-700 border border-red-200 font-bold animate-pulse">
                             <AlertTriangle className="w-3.5 h-3.5" /> SLA BREACH
                           </span>
                         )}
+                        {r.slaPaused && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-violet-100 text-violet-700 border border-violet-200 font-bold">
+                            <Pause className="w-3 h-3" /> Waiting on patient
+                          </span>
+                        )}
                       </div>
                       <p className="text-slate-500 text-xs mt-1 font-semibold truncate">{r.specialistType} — {r.reason}</p>
+                    </div>
+
+                    {/* Live SLA countdown */}
+                    <div className="hidden sm:flex shrink-0 min-w-[120px]" onClick={e => e.stopPropagation()}>
+                      <SlaTimer deadline={r.slaDeadline} status={r.status} compact paused={r.slaPaused} pauseReason={r.slaPauseReason} />
                     </div>
 
                     {/* Priority Score */}
@@ -871,9 +993,12 @@ export default function DashboardPage() {
                         </div>
                         <div>
                           <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">SLA Deadline</p>
-                          <p className={`text-sm font-bold ${r.slaBreach ? 'text-red-600' : 'text-slate-800'}`}>
+                          <p className={`text-sm font-bold ${r.slaBreach && !r.slaPaused ? 'text-red-600' : 'text-slate-800'}`}>
                             {formatDate(r.slaDeadline)}
                           </p>
+                          <div className="mt-1.5">
+                            <SlaTimer deadline={r.slaDeadline} status={r.status} paused={r.slaPaused} pauseReason={r.slaPauseReason} />
+                          </div>
                         </div>
                         <div>
                           <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Submitted By</p>
@@ -921,7 +1046,7 @@ export default function DashboardPage() {
                       <div className="border-t border-slate-100 pt-3 flex flex-wrap items-center justify-between gap-2">
                         <div className="flex flex-wrap gap-2">
                           {/* Claim / Release */}
-                          {(user.roles.includes('TriageNurse') || user.roles.includes('Admin')) && (
+                          {(user.roles.includes('TriageNurse') || user.roles.includes('Admin') || user.roles.includes('GP')) && (
                             <>
                               {!r.claimedByUser ? (
                                 <button onClick={() => claimReferral(r)}
@@ -939,8 +1064,25 @@ export default function DashboardPage() {
                             </>
                           )}
 
+                          {/* SLA pause / resume (waiting on patient) */}
+                          {(user.roles.includes('TriageNurse') || user.roles.includes('Admin') || user.roles.includes('GP'))
+                            && (!r.claimedByUser || r.claimedByUser.email === user.email)
+                            && !['Completed', 'Declined'].includes(r.status) && (
+                            r.slaPaused ? (
+                              <button onClick={() => resumeSla(r)}
+                                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold transition-all shadow-sm">
+                                <Play className="w-3.5 h-3.5" /> Resume SLA
+                              </button>
+                            ) : (
+                              <button onClick={() => pauseSla(r)}
+                                className="flex items-center gap-1.5 px-4 py-2 bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 rounded-xl text-xs font-bold transition-all shadow-sm">
+                                <Pause className="w-3.5 h-3.5" /> Pause SLA (waiting on patient)
+                              </button>
+                            )
+                          )}
+
                           {/* Status transition dropdown / buttons */}
-                          {(user.roles.includes('TriageNurse') || user.roles.includes('Admin')) && (!r.claimedByUser || r.claimedByUser.email === user.email) && (
+                          {(user.roles.includes('TriageNurse') || user.roles.includes('Admin') || user.roles.includes('GP')) && (!r.claimedByUser || r.claimedByUser.email === user.email) && (
                             <div className="flex items-center gap-1">
                               {statusTransitions[r.status]?.map(nextStat => (
                                 <button
@@ -1106,8 +1248,8 @@ export default function DashboardPage() {
                   {/* Urgency */}
                   <div>
                     <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1.5 block">Urgency Level</label>
-                    <div className="grid grid-cols-4 gap-1.5">
-                      {['Routine', 'Soon', 'Urgent', 'Emergency'].map(lvl => (
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {['Routine', 'SemiUrgent', 'Urgent'].map(lvl => (
                         <button
                           key={lvl}
                           type="button"
@@ -1118,7 +1260,7 @@ export default function DashboardPage() {
                               : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
                           }`}
                         >
-                          {lvl}
+                          {lvl === 'SemiUrgent' ? 'Semi-Urgent' : lvl}
                         </button>
                       ))}
                     </div>
@@ -1295,6 +1437,14 @@ export default function DashboardPage() {
                           actionTitle = 'Referral Released';
                           actionColor = 'bg-slate-100 text-slate-700 border-slate-300';
                           actionIcon = <Unlock className="w-3 h-3" />;
+                        } else if (log.action === 'SlaPaused') {
+                          actionTitle = 'SLA paused (waiting on patient)';
+                          actionColor = 'bg-violet-50 text-violet-700 border-violet-200';
+                          actionIcon = <Pause className="w-3 h-3" />;
+                        } else if (log.action === 'SlaResumed') {
+                          actionTitle = 'SLA resumed';
+                          actionColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                          actionIcon = <Play className="w-3 h-3" />;
                         } else if (log.action === 'StatusChanged') {
                           const statusMap: Record<string | number, string> = {
                             1: 'Received', 2: 'Triaged', 3: 'Accepted', 4: 'Declined', 5: 'Booked', 6: 'Completed',

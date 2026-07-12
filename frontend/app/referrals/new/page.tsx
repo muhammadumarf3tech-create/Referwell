@@ -39,7 +39,7 @@ interface User {
 }
 
 export default function NewReferralPage() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
 
   // Patients states
@@ -72,6 +72,7 @@ export default function NewReferralPage() {
 
   // Load patients and users
   useEffect(() => {
+    if (isLoading) return;
     if (!user) { router.push('/login'); return; }
     loadPatients('');
     loadUsers();
@@ -79,7 +80,7 @@ export default function NewReferralPage() {
     
     // Set default assignee to current user
     setForm(f => ({ ...f, assignedToUserId: user.id }));
-  }, [user, router]);
+  }, [user, isLoading, router]);
 
   const loadPatients = async (query: string) => {
     if (!user) return;
@@ -214,9 +215,8 @@ export default function NewReferralPage() {
 
     const urgencyMap: Record<string, number> = {
       'Routine': 1,
-      'Soon': 2,
-      'Urgent': 3,
-      'Emergency': 4
+      'SemiUrgent': 2,
+      'Urgent': 3
     };
 
     try {
@@ -269,10 +269,17 @@ export default function NewReferralPage() {
 
   const urgencyOptions = [
     { value: 'Routine', label: 'Routine' },
-    { value: 'Soon', label: 'Soon' },
+    { value: 'SemiUrgent', label: 'Semi-Urgent' },
     { value: 'Urgent', label: 'Urgent' },
-    { value: 'Emergency', label: 'Emergency' },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   if (!user) return null;
 
@@ -423,7 +430,7 @@ export default function NewReferralPage() {
             {/* Urgency Selection */}
             <div>
               <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1.5 block">Urgency Level</label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {urgencyOptions.map(opt => (
                   <button 
                     key={opt.value} 

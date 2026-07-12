@@ -5,57 +5,38 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { 
   LayoutDashboard, Settings, MessageSquare, Users, 
-  LogOut, ChevronDown, Activity, Bell, ShieldCheck, Key
+  LogOut, ChevronDown, Activity, Bell, Key
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { fetchMenuAccess, hasMenuAccess, type MenuAccessDto } from '@/lib/menuAccess';
 
 const navItems = [
   {
     label: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
-    roles: ['Admin', 'TriageNurse', 'GP'],
   },
   {
     label: 'Priority Config',
     href: '/configs',
     icon: Settings,
-    roles: ['Admin', 'TriageNurse'],
   },
   {
     label: 'Mass Communications',
     href: '/mass-comm',
     icon: MessageSquare,
-    roles: ['Admin', 'TriageNurse'],
   },
   {
     label: 'User Management',
     href: '/users',
     icon: Users,
-    roles: ['Admin'],
   },
   {
     label: 'Menu Access',
     href: '/menu-access',
     icon: Key,
-    roles: ['Admin'],
   },
 ];
-
-interface MenuAccessDto {
-  role: number | string;
-  menuItem: string;
-  hasAccess: boolean;
-}
-
-const roleNameMap: Record<number | string, string> = {
-  1: 'Admin',
-  2: 'TriageNurse',
-  3: 'GP',
-  'Admin': 'Admin',
-  'TriageNurse': 'TriageNurse',
-  'GP': 'GP'
-};
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -65,30 +46,17 @@ export default function Navbar() {
 
   useEffect(() => {
     if (!user) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/menuaccess`, {
-      headers: { Authorization: `Bearer ${user.token}` }
-    })
-      .then(res => res.json())
-      .then((data: MenuAccessDto[]) => setMenuAccesses(data))
+    fetchMenuAccess(user.token)
+      .then(data => setMenuAccesses(data))
       .catch(() => {});
   }, [user]);
 
   if (!user) return null;
 
-  // Filter navigation items dynamically based on the DB configuration
-  const filteredNav = navItems.filter(item => {
-    const rolesList = user.roles || [];
-    if (menuAccesses.length > 0) {
-      return rolesList.some(uRole => {
-        return menuAccesses.some(ma => {
-          const mappedRole = roleNameMap[ma.role];
-          return mappedRole === uRole && ma.menuItem === item.label && ma.hasAccess;
-        });
-      });
-    }
-    // Fallback: check hardcoded roles
-    return item.roles.some(r => rolesList.includes(r));
-  });
+  // Navigation visibility comes only from Role Menu Access configuration
+  const filteredNav = navItems.filter(item =>
+    hasMenuAccess(item.label, user.roles || [], menuAccesses)
+  );
 
   const getRoleLabel = (roles: string[]) => {
     let rolesList = roles || [];

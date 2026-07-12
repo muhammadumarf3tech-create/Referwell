@@ -54,7 +54,7 @@ public class MassCommBackgroundService : BackgroundService
                     if (msg != null)
                     {
                         msg.Status = "Sent";
-                        msg.SentAt = DateTime.UtcNow;
+                        msg.SentAt = DateTime.Now;
                         await db.SaveChangesAsync(stoppingToken);
                     }
                     _logger.LogInformation("Message sent to {Email}", message.RecipientEmail);
@@ -62,9 +62,29 @@ public class MassCommBackgroundService : BackgroundService
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Failed to send message to {Email}", message.RecipientEmail);
+                    using var scope = _scopeFactory.CreateScope();
+                    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    var failedMessage = await db.MassCommMessages.FindAsync(new object[] { message.Id }, stoppingToken);
+                    if (failedMessage != null)
+                    {
+                        failedMessage.Status = "Failed";
+                        failedMessage.ErrorMessage = ex.Message;
+                        await db.SaveChangesAsync(stoppingToken);
+                    }
                 }
 
                 await Task.Delay(ThrottleDelay, stoppingToken);
+            }
+
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var campaign = await db.MassCommCampaigns.FindAsync(new object[] { job.CampaignId }, stoppingToken);
+                if (campaign != null)
+                {
+                    campaign.Status = "Completed";
+                    await db.SaveChangesAsync(stoppingToken);
+                }
             }
         }
     }

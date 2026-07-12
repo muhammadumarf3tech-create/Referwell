@@ -20,9 +20,13 @@ public class Referral
     public ReferralStatus Status { get; set; } = ReferralStatus.Received;
 
     // SLA
-    public DateTime ReceivedAt { get; set; } = DateTime.UtcNow;
+    public DateTime ReceivedAt { get; set; } = DateTime.Now;
     public DateTime SlaDeadline { get; set; }
     public bool SlaBreach { get; set; } = false;
+    /// <summary>When true, the SLA clock is frozen (e.g. waiting on patient).</summary>
+    public bool SlaPaused { get; set; } = false;
+    public DateTime? SlaPausedAt { get; set; }
+    public string? SlaPauseReason { get; set; }
 
     // Assignment management
     public Guid? AssignedToUserId { get; set; }
@@ -40,7 +44,7 @@ public class Referral
     [System.ComponentModel.DataAnnotations.Timestamp]
     public byte[]? RowVersion { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public DateTime? UpdatedAt { get; set; }
 
     // Navigation
@@ -65,7 +69,61 @@ public class Referral
             throw new InvalidReferralTransitionException(Status, newStatus);
 
         Status = newStatus;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTime.Now;
+
+        // Closed referrals drop any active pause without extending the deadline
+        if ((newStatus == ReferralStatus.Declined || newStatus == ReferralStatus.Completed) && SlaPaused)
+            ClearSlaPause();
+    }
+
+    /// <summary>
+    /// Freezes the SLA clock (typically while waiting on the patient).
+    /// Paused referrals are excluded from active breach filters/stats until resumed.
+    /// </summary>
+    public void PauseSla(string reason = "WaitingOnPatient", DateTime? asOf = null)
+    {
+        if (Status is ReferralStatus.Declined or ReferralStatus.Completed)
+            throw new InvalidSlaPauseException("Cannot pause SLA on a closed referral.");
+
+        if (SlaPaused)
+            throw new InvalidSlaPauseException("SLA is already paused.");
+
+        var reasonText = string.IsNullOrWhiteSpace(reason) ? "WaitingOnPatient" : reason.Trim();
+        if (reasonText.Length > 100)
+            reasonText = reasonText[..100];
+
+        SlaPaused = true;
+        SlaPausedAt = asOf ?? DateTime.Now;
+        SlaPauseReason = reasonText;
+        UpdatedAt = DateTime.Now;
+    }
+
+    /// <summary>True when the referral has an SLA breach that is currently actionable (not paused).</summary>
+    public bool IsActivelySlaBreached => SlaBreach && !SlaPaused;
+
+    /// <summary>
+    /// Resumes the SLA clock and extends the deadline by the paused duration.
+    /// </summary>
+    public void ResumeSla(DateTime? asOf = null)
+    {
+        if (!SlaPaused || !SlaPausedAt.HasValue)
+            throw new InvalidSlaPauseException("SLA is not paused.");
+
+        var now = asOf ?? DateTime.Now;
+        var pausedFor = now - SlaPausedAt.Value;
+        if (pausedFor > TimeSpan.Zero)
+            SlaDeadline = SlaDeadline.Add(pausedFor);
+
+        ClearSlaPause();
+        UpdatedAt = DateTime.Now;
+        EvaluateSlaBreach(now);
+    }
+
+    private void ClearSlaPause()
+    {
+        SlaPaused = false;
+        SlaPausedAt = null;
+        SlaPauseReason = null;
     }
 
     public void Claim(Guid userId)
@@ -74,15 +132,15 @@ public class Referral
             throw new ReferralAlreadyClaimedException(Id, ClaimedByUserId.Value);
 
         ClaimedByUserId = userId;
-        ClaimedAt = DateTime.UtcNow;
-        UpdatedAt = DateTime.UtcNow;
+        ClaimedAt = DateTime.Now;
+        UpdatedAt = DateTime.Now;
     }
 
     public void Release()
     {
         ClaimedByUserId = null;
         ClaimedAt = null;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTime.Now;
     }
 
     // ─── SLA Calculation ─────────────────────────────────────────────────────
@@ -95,4 +153,33 @@ public class Referral
             UrgencyLevel.Routine    => receivedAt.AddDays(30),
             _                       => receivedAt.AddDays(30)
         };
+
+    /// <summary>
+    /// Time-to-first-triage SLA: marks breach when still <see cref="ReferralStatus.Received"/>
+    /// (no triage action yet) and the deadline has passed. Once triage has occurred the flag
+    /// is left sticky for historical reporting. Returns true when newly breached.
+    /// </summary>
+    public bool EvaluateSlaBreach(DateTime? asOf = null)
+    {
+        var now = asOf ?? DateTime.Now;
+
+        // Clock frozen — do not mark or clear breach while paused
+        if (SlaPaused)
+            return false;
+
+        // Past first action — keep any existing breach flag as history
+        if (Status != ReferralStatus.Received)
+            return false;
+
+        if (now > SlaDeadline)
+        {
+            if (SlaBreach) return false;
+            SlaBreach = true;
+            return true;
+        }
+
+        // Still inside the window (e.g. urgency extended the deadline)
+        SlaBreach = false;
+        return false;
+    }
 }

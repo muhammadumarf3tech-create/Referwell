@@ -13,5 +13,5 @@ public class AuditLog
     public ReferralStatus? ToStatus { get; set; }
     public string Action { get; set; } = string.Empty;
     public string? Notes { get; set; }
-    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+    public DateTime Timestamp { get; set; } = DateTime.Now;
 }

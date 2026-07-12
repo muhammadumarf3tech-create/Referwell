@@ -11,7 +11,7 @@ public class Patient
     public string PhoneNumber { get; set; } = string.Empty;
     public string NhiNumber { get; set; } = string.Empty;
     public string Gender { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     // Navigation
     [JsonIgnore]

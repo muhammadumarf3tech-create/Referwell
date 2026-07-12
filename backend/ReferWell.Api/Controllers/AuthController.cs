@@ -40,7 +40,7 @@ public class AuthController : ControllerBase
         }
 
         // Update last login
-        user.LastLoginAt = DateTime.UtcNow;
+        user.LastLoginAt = DateTime.Now;
         await _db.SaveChangesAsync();
 
         var token = GenerateJwtToken(user);
@@ -71,7 +71,7 @@ public class AuthController : ControllerBase
             issuer: jwtConfig["Issuer"],
             audience: jwtConfig["Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(expireMinutes),
+            expires: DateTime.Now.AddMinutes(expireMinutes),
             signingCredentials: creds
         );
 

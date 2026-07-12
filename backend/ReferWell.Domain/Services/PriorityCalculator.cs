@@ -27,12 +27,12 @@ public static class PriorityCalculator
         };
 
         // Wait time in days, capped at 90 days → normalized 0-100
-        double waitDays = (DateTime.UtcNow - receivedAt).TotalDays;
+        double waitDays = (DateTime.Now - receivedAt).TotalDays;
         double waitScore = Math.Min(waitDays / 90.0, 1.0) * 100;
 
         // Patient age: older patients → higher score (capped at 100 for 90+)
-        int age = DateTime.UtcNow.Year - patientDateOfBirth.Year;
-        if (patientDateOfBirth.Date > DateTime.UtcNow.AddYears(-age)) age--;
+        int age = DateTime.Now.Year - patientDateOfBirth.Year;
+        if (patientDateOfBirth.Date > DateTime.Now.AddYears(-age)) age--;
         double ageScore = Math.Min(age / 90.0, 1.0) * 100;
 
         return ((weightUrgency / 100.0) * urgencyScore)

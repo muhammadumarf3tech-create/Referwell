@@ -4,13 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Key, Save, Loader2, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
-
-interface MenuAccessDto {
-  id?: string;
-  role: number | string;
-  menuItem: string;
-  hasAccess: boolean;
-}
+import { fetchMenuAccess, hasMenuAccess, type MenuAccessDto } from '@/lib/menuAccess';
 
 const roleNames = ['Admin', 'TriageNurse', 'GP'];
 const roleEnumMap: Record<string, number> = {
@@ -22,7 +16,7 @@ const roleEnumMap: Record<string, number> = {
 const menuItems = ['Dashboard', 'Priority Config', 'Mass Communications', 'User Management', 'Menu Access'];
 
 export default function MenuAccessPage() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   const [accesses, setAccesses] = useState<MenuAccessDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,21 +24,30 @@ export default function MenuAccessPage() {
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!user) { router.push('/login'); return; }
-    if (!user.roles.includes('Admin')) { router.push('/dashboard'); return; }
-    loadMenuAccess();
-  }, [user, router]);
+
+    let cancelled = false;
+    (async () => {
+      const data = await fetchMenuAccess(user.token);
+      if (cancelled) return;
+      if (!hasMenuAccess('Menu Access', user.roles, data)) {
+        router.push('/dashboard');
+        return;
+      }
+      setAccesses(data);
+      setLoading(false);
+    })();
+
+    return () => { cancelled = true; };
+  }, [user, isLoading, router]);
 
   const loadMenuAccess = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/menuaccess`, {
-        headers: { Authorization: `Bearer ${user.token}` }
-      });
-      if (res.ok) {
-        setAccesses(await res.json());
-      }
+      const data = await fetchMenuAccess(user.token);
+      setAccesses(data);
     } finally {
       setLoading(false);
     }
@@ -113,6 +116,14 @@ export default function MenuAccessPage() {
       setTimeout(() => setToast(null), 4000);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   if (!user) return null;
 

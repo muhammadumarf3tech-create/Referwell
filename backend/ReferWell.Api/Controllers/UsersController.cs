@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ReferWell.Api.Authorization;
 using ReferWell.Domain.Entities;
 using ReferWell.Domain.Enums;
 using ReferWell.Infrastructure.Data;
@@ -40,7 +41,7 @@ public class UsersController : ControllerBase
                     u.Id, u.FullName, u.Email,
                     Roles = u.UserRoles.Select(ur => ur.Role.ToString()).ToList(),
                     u.IsActive, u.CreatedAt, u.LastLoginAt,
-                    u.Password, u.Title, u.Gender, u.PhoneNumber
+                    u.Title, u.Gender, u.PhoneNumber
                 })
                 .ToListAsync();
 
@@ -64,7 +65,7 @@ public class UsersController : ControllerBase
                     u.Id, u.FullName, u.Email,
                     Roles = u.UserRoles.Select(ur => ur.Role.ToString()).ToList(),
                     u.IsActive, u.CreatedAt, u.LastLoginAt,
-                    u.Password, u.Title, u.Gender, u.PhoneNumber
+                    u.Title, u.Gender, u.PhoneNumber
                 })
                 .ToListAsync();
             return Ok(items);
@@ -83,12 +84,12 @@ public class UsersController : ControllerBase
             user.Id, user.FullName, user.Email,
             Roles = user.UserRoles.Select(ur => ur.Role.ToString()).ToList(),
             user.IsActive, user.CreatedAt, user.LastLoginAt,
-            user.Password, user.Title, user.Gender, user.PhoneNumber
+            user.Title, user.Gender, user.PhoneNumber
         });
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [MenuAuthorize("User Management")]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest req)
     {
         if (await _db.Users.AnyAsync(u => u.Email == req.Email))
@@ -99,7 +100,6 @@ public class UsersController : ControllerBase
             FullName = req.FullName,
             Email = req.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
-            Password = req.Password,
             Title = req.Title,
             Gender = req.Gender ?? string.Empty,
             PhoneNumber = req.PhoneNumber ?? string.Empty
@@ -115,11 +115,11 @@ public class UsersController : ControllerBase
 
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetUser), new { id = user.Id }, new { user.Id, user.FullName, user.Email, Roles = user.UserRoles.Select(ur => ur.Role.ToString()).ToList(), user.Password, user.Title, user.Gender, user.PhoneNumber });
+        return CreatedAtAction(nameof(GetUser), new { id = user.Id }, new { user.Id, user.FullName, user.Email, Roles = user.UserRoles.Select(ur => ur.Role.ToString()).ToList(), user.Title, user.Gender, user.PhoneNumber });
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin")]
+    [MenuAuthorize("User Management")]
     public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserRequest req)
     {
         var user = await _db.Users
@@ -144,24 +144,31 @@ public class UsersController : ControllerBase
 
         if (req.Roles != null)
         {
-            // Delete all existing roles for this user directly via SQL to avoid EF concurrency tracking issues
-            await _db.Database.ExecuteSqlRawAsync(
-                "DELETE FROM tblUserRoles WHERE UserId = {0}", id);
+            var requestedRoles = req.Roles.Distinct().ToHashSet();
+            var rolesToRemove = user.UserRoles
+                .Where(ur => !requestedRoles.Contains(ur.Role))
+                .ToList();
+            var existingRoles = user.UserRoles
+                .Select(ur => ur.Role)
+                .ToHashSet();
 
-            // Clear the navigation collection to reflect the database state
-            user.UserRoles.Clear();
+            // Explicitly track deletes and inserts. This avoids relying on
+            // relationship fix-up after a role has been removed from the navigation collection.
+            _db.UserRoles.RemoveRange(rolesToRemove);
 
-            // Add the new set of roles
-            foreach (var role in req.Roles)
-            {
-                user.UserRoles.Add(new ApplicationUserRole { UserId = id, Role = role });
-            }
+            var rolesToAdd = requestedRoles
+                .Where(role => !existingRoles.Contains(role))
+                .Select(role => new ApplicationUserRole
+                {
+                    UserId = user.Id,
+                    Role = role
+                });
+            await _db.UserRoles.AddRangeAsync(rolesToAdd);
         }
 
         if (!string.IsNullOrWhiteSpace(req.NewPassword))
         {
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.NewPassword);
-            user.Password = req.NewPassword;
         }
 
         await _db.SaveChangesAsync();
@@ -169,7 +176,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [MenuAuthorize("User Management")]
     public async Task<IActionResult> DeactivateUser(Guid id)
     {
         var user = await _db.Users.FindAsync(id);

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ReferWell.Api.Authorization;
 using ReferWell.Domain.Entities;
 using ReferWell.Domain.Enums;
 using ReferWell.Infrastructure.Data;
@@ -24,7 +25,7 @@ public class MenuAccessController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [MenuAuthorize("Menu Access")]
     public async Task<IActionResult> UpdateMenuAccess([FromBody] List<RoleMenuAccessDto> req)
     {
         var dbAccesses = await _db.RoleMenuAccesses.ToListAsync();

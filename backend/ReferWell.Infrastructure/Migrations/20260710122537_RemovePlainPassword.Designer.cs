@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ReferWell.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ReferWell.Infrastructure.Data;
 namespace ReferWell.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260710122537_RemovePlainPassword")]
+    partial class RemovePlainPassword
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -73,48 +76,48 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@referwell.com",
                             FullName = "John Doe",
                             Gender = "Male",
                             IsActive = true,
-                            PasswordHash = "$2a$11$arWPA0e0Rr39IxILEk65neV.Nl1Mrpo9V7u4F6BkE.A/X2orLaEpS",
+                            PasswordHash = "$2a$11$uI9D8ml3SLpwOZx/0GhFi.R4ndBxS8gkJgSkwk9VFbtoO6cQXvkJ2",
                             PhoneNumber = "+64 21 111 2222",
                             Title = "Mr."
                         },
                         new
                         {
                             Id = new Guid("22222222-2222-2222-2222-222222222222"),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "nurse@referwell.com",
                             FullName = "Sarah Jenkins",
                             Gender = "Female",
                             IsActive = true,
-                            PasswordHash = "$2a$11$eO2F/KcbP7Rj1VH.E8q8P.wrSV.5EFsJhP3aeu7WlXXg.7bsmnzZK",
+                            PasswordHash = "$2a$11$rPp/XZw3M.ouqkktGZJ07elvkPFYV4dXi0B8IGC4HwrvWHCywEFPG",
                             PhoneNumber = "+64 22 222 3333",
                             Title = "Mrs."
                         },
                         new
                         {
                             Id = new Guid("33333333-3333-3333-3333-333333333333"),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "gp1@referwell.com",
                             FullName = "James Wilson",
                             Gender = "Male",
                             IsActive = true,
-                            PasswordHash = "$2a$11$uBK1YEZH/Dp3XgGKSD5SwukkEMJMO5soXjm.0ms.f2eZeGMkT4hJC",
+                            PasswordHash = "$2a$11$Xw4IxmGdbErjgm0KajArYe2hsQOSaWumZr8DRsbJEoM7oScFw4f7K",
                             PhoneNumber = "+64 27 333 4444",
                             Title = "Dr."
                         },
                         new
                         {
                             Id = new Guid("44444444-4444-4444-4444-444444444444"),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "gp2@referwell.com",
                             FullName = "Amelia Hart",
                             Gender = "Female",
                             IsActive = true,
-                            PasswordHash = "$2a$11$QFsJKNAvB8isQ1suhdU8T.8z0fKVB4nA3Esj1G7hW6XPzFSYtTwpu",
+                            PasswordHash = "$2a$11$nWiwhhiOkubCNwa7WLEdfegfU6cmHK9PgPKrQjM0Uct/TU4dMb6XO",
                             PhoneNumber = "+64 29 444 5555",
                             Title = "Dr."
                         });
@@ -264,22 +267,7 @@ namespace ReferWell.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("RecipientType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ReferralCaseNo")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("ReferralId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("RenderedBody")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RenderedSubject")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -340,8 +328,8 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("55555555-5555-5555-5555-555555555555"),
-                            CreatedAt = new DateTime(2026, 7, 12, 19, 56, 13, 533, DateTimeKind.Local).AddTicks(2460),
-                            DateOfBirth = new DateTime(1955, 3, 10, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2026, 7, 10, 12, 25, 36, 623, DateTimeKind.Utc).AddTicks(8203),
+                            DateOfBirth = new DateTime(1955, 3, 10, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "alice.martin@example.com",
                             Gender = "Female",
                             Name = "Alice Martin",
@@ -351,8 +339,8 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("66666666-6666-6666-6666-666655555555"),
-                            CreatedAt = new DateTime(2026, 7, 12, 19, 56, 13, 533, DateTimeKind.Local).AddTicks(2487),
-                            DateOfBirth = new DateTime(1970, 7, 22, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2026, 7, 10, 12, 25, 36, 623, DateTimeKind.Utc).AddTicks(8214),
+                            DateOfBirth = new DateTime(1970, 7, 22, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "bob.clarke@example.com",
                             Gender = "Male",
                             Name = "Bob Clarke",
@@ -362,8 +350,8 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("77777777-7777-7777-7777-777755555555"),
-                            CreatedAt = new DateTime(2026, 7, 12, 19, 56, 13, 533, DateTimeKind.Local).AddTicks(2491),
-                            DateOfBirth = new DateTime(1940, 11, 5, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2026, 7, 10, 12, 25, 36, 623, DateTimeKind.Utc).AddTicks(8217),
+                            DateOfBirth = new DateTime(1940, 11, 5, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "carol.ahmed@example.com",
                             Gender = "Female",
                             Name = "Carol Ahmed",
@@ -373,8 +361,8 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("88888888-8888-8888-8888-888855555555"),
-                            CreatedAt = new DateTime(2026, 7, 12, 19, 56, 13, 533, DateTimeKind.Local).AddTicks(2495),
-                            DateOfBirth = new DateTime(1985, 2, 14, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2026, 7, 10, 12, 25, 36, 623, DateTimeKind.Utc).AddTicks(8219),
+                            DateOfBirth = new DateTime(1985, 2, 14, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "david.johnson@example.com",
                             Gender = "Male",
                             Name = "David Johnson",
@@ -384,8 +372,8 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("99999999-9999-9999-9999-999955555555"),
-                            CreatedAt = new DateTime(2026, 7, 12, 19, 56, 13, 533, DateTimeKind.Local).AddTicks(2498),
-                            DateOfBirth = new DateTime(1932, 8, 30, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2026, 7, 10, 12, 25, 36, 623, DateTimeKind.Utc).AddTicks(8221),
+                            DateOfBirth = new DateTime(1932, 8, 30, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "eva.rodriguez@example.com",
                             Gender = "Female",
                             Name = "Eva Rodriguez",
@@ -395,8 +383,8 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-5555-5555-5555-555555555555"),
-                            CreatedAt = new DateTime(2026, 7, 12, 19, 56, 13, 533, DateTimeKind.Local).AddTicks(2503),
-                            DateOfBirth = new DateTime(1960, 4, 18, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2026, 7, 10, 12, 25, 36, 623, DateTimeKind.Utc).AddTicks(8223),
+                            DateOfBirth = new DateTime(1960, 4, 18, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "frank.lee@example.com",
                             Gender = "Male",
                             Name = "Frank Lee",
@@ -406,8 +394,8 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("bbbbbbbb-5555-5555-5555-555555555555"),
-                            CreatedAt = new DateTime(2026, 7, 12, 19, 56, 13, 533, DateTimeKind.Local).AddTicks(2506),
-                            DateOfBirth = new DateTime(1978, 12, 3, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2026, 7, 10, 12, 25, 36, 623, DateTimeKind.Utc).AddTicks(8225),
+                            DateOfBirth = new DateTime(1978, 12, 3, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "grace.kim@example.com",
                             Gender = "Female",
                             Name = "Grace Kim",
@@ -417,8 +405,8 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("cccccccc-5555-5555-5555-555555555555"),
-                            CreatedAt = new DateTime(2026, 7, 12, 19, 56, 13, 533, DateTimeKind.Local).AddTicks(2513),
-                            DateOfBirth = new DateTime(1945, 6, 25, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2026, 7, 10, 12, 25, 36, 623, DateTimeKind.Utc).AddTicks(8227),
+                            DateOfBirth = new DateTime(1945, 6, 25, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "henry.smith@example.com",
                             Gender = "Male",
                             Name = "Henry Smith",
@@ -482,16 +470,6 @@ namespace ReferWell.Infrastructure.Migrations
                     b.Property<DateTime>("SlaDeadline")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("SlaPauseReason")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool>("SlaPaused")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("SlaPausedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("SpecialistType")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -521,152 +499,144 @@ namespace ReferWell.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("62c3cd59-f32d-4961-9c23-9b2d126f8aa3"),
+                            Id = new Guid("b2d596bd-298f-4fd5-be60-0b4fddbafc9c"),
                             AssignedToUserId = new Guid("33333333-3333-3333-3333-333333333333"),
                             CaseNo = "Ref-000001",
-                            CreatedAt = new DateTime(2024, 5, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2024, 5, 27, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = new Guid("33333333-3333-3333-3333-333333333333"),
                             PatientId = new Guid("55555555-5555-5555-5555-555555555555"),
                             PriorityScore = 75.5,
                             Reason = "Chest pain",
-                            ReceivedAt = new DateTime(2024, 5, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            ReceivedAt = new DateTime(2024, 5, 27, 0, 0, 0, 0, DateTimeKind.Utc),
                             ReferringGPId = "33333333-3333-3333-3333-333333333333",
                             SlaBreach = false,
-                            SlaDeadline = new DateTime(2024, 5, 28, 0, 0, 0, 0, DateTimeKind.Local),
-                            SlaPaused = false,
+                            SlaDeadline = new DateTime(2024, 5, 28, 0, 0, 0, 0, DateTimeKind.Utc),
                             SpecialistType = "Cardiology",
                             Status = 1,
                             Urgency = 3
                         },
                         new
                         {
-                            Id = new Guid("5f0c804b-a557-4a84-ba06-592ee2aea1d2"),
+                            Id = new Guid("f5238c39-5714-4640-b493-8dc2d5d1a05d"),
                             AssignedToUserId = new Guid("33333333-3333-3333-3333-333333333333"),
                             CaseNo = "Ref-000002",
-                            CreatedAt = new DateTime(2024, 5, 22, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2024, 5, 22, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = new Guid("33333333-3333-3333-3333-333333333333"),
                             PatientId = new Guid("66666666-6666-6666-6666-666655555555"),
                             PriorityScore = 30.199999999999999,
                             Reason = "Knee pain",
-                            ReceivedAt = new DateTime(2024, 5, 22, 0, 0, 0, 0, DateTimeKind.Local),
+                            ReceivedAt = new DateTime(2024, 5, 22, 0, 0, 0, 0, DateTimeKind.Utc),
                             ReferringGPId = "33333333-3333-3333-3333-333333333333",
                             SlaBreach = false,
-                            SlaDeadline = new DateTime(2024, 6, 21, 0, 0, 0, 0, DateTimeKind.Local),
-                            SlaPaused = false,
+                            SlaDeadline = new DateTime(2024, 6, 21, 0, 0, 0, 0, DateTimeKind.Utc),
                             SpecialistType = "Orthopedics",
                             Status = 2,
                             Urgency = 1
                         },
                         new
                         {
-                            Id = new Guid("a6012e7b-ee72-4523-89be-1b9f0992535f"),
+                            Id = new Guid("67276cdd-abc6-4b9a-b62b-9d0413300810"),
                             AssignedToUserId = new Guid("44444444-4444-4444-4444-444444444444"),
                             CaseNo = "Ref-000003",
-                            CreatedAt = new DateTime(2024, 5, 29, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2024, 5, 29, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = new Guid("44444444-4444-4444-4444-444444444444"),
                             PatientId = new Guid("77777777-7777-7777-7777-777755555555"),
                             PriorityScore = 55.0,
                             Reason = "Recurring headaches",
-                            ReceivedAt = new DateTime(2024, 5, 29, 0, 0, 0, 0, DateTimeKind.Local),
+                            ReceivedAt = new DateTime(2024, 5, 29, 0, 0, 0, 0, DateTimeKind.Utc),
                             ReferringGPId = "44444444-4444-4444-4444-444444444444",
                             SlaBreach = false,
-                            SlaDeadline = new DateTime(2024, 6, 5, 0, 0, 0, 0, DateTimeKind.Local),
-                            SlaPaused = false,
+                            SlaDeadline = new DateTime(2024, 6, 5, 0, 0, 0, 0, DateTimeKind.Utc),
                             SpecialistType = "Neurology",
                             Status = 3,
                             Urgency = 2
                         },
                         new
                         {
-                            Id = new Guid("78064ad5-a6b0-44f7-a2c8-1955878ea687"),
+                            Id = new Guid("1bd66202-c918-4a75-b868-858267ed62fe"),
                             AssignedToUserId = new Guid("44444444-4444-4444-4444-444444444444"),
                             CaseNo = "Ref-000004",
-                            CreatedAt = new DateTime(2024, 5, 17, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2024, 5, 17, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = new Guid("44444444-4444-4444-4444-444444444444"),
                             PatientId = new Guid("88888888-8888-8888-8888-888855555555"),
                             PriorityScore = 22.800000000000001,
                             Reason = "Skin rash",
-                            ReceivedAt = new DateTime(2024, 5, 17, 0, 0, 0, 0, DateTimeKind.Local),
+                            ReceivedAt = new DateTime(2024, 5, 17, 0, 0, 0, 0, DateTimeKind.Utc),
                             ReferringGPId = "44444444-4444-4444-4444-444444444444",
                             SlaBreach = false,
-                            SlaDeadline = new DateTime(2024, 6, 16, 0, 0, 0, 0, DateTimeKind.Local),
-                            SlaPaused = false,
+                            SlaDeadline = new DateTime(2024, 6, 16, 0, 0, 0, 0, DateTimeKind.Utc),
                             SpecialistType = "Dermatology",
                             Status = 5,
                             Urgency = 1
                         },
                         new
                         {
-                            Id = new Guid("cec98b32-5119-4ffd-9ab4-de02d98f81ae"),
+                            Id = new Guid("d0da820c-97bf-4ffa-b9cc-c71325d1a403"),
                             AssignedToUserId = new Guid("33333333-3333-3333-3333-333333333333"),
                             CaseNo = "Ref-000005",
-                            CreatedAt = new DateTime(2024, 5, 31, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2024, 5, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = new Guid("33333333-3333-3333-3333-333333333333"),
                             PatientId = new Guid("99999999-9999-9999-9999-999955555555"),
                             PriorityScore = 98.5,
                             Reason = "Mass detection",
-                            ReceivedAt = new DateTime(2024, 5, 31, 0, 0, 0, 0, DateTimeKind.Local),
+                            ReceivedAt = new DateTime(2024, 5, 31, 0, 0, 0, 0, DateTimeKind.Utc),
                             ReferringGPId = "33333333-3333-3333-3333-333333333333",
                             SlaBreach = false,
-                            SlaDeadline = new DateTime(2024, 5, 31, 4, 0, 0, 0, DateTimeKind.Local),
-                            SlaPaused = false,
+                            SlaDeadline = new DateTime(2024, 5, 31, 4, 0, 0, 0, DateTimeKind.Utc),
                             SpecialistType = "Oncology",
                             Status = 1,
                             Urgency = 3
                         },
                         new
                         {
-                            Id = new Guid("eea83374-f069-4313-bbef-607a41558118"),
+                            Id = new Guid("995ed57a-9646-4495-a130-b38b31710340"),
                             AssignedToUserId = new Guid("44444444-4444-4444-4444-444444444444"),
                             CaseNo = "Ref-000006",
-                            CreatedAt = new DateTime(2024, 5, 30, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2024, 5, 30, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = new Guid("44444444-4444-4444-4444-444444444444"),
                             PatientId = new Guid("aaaaaaaa-5555-5555-5555-555555555555"),
                             PriorityScore = 48.299999999999997,
                             Reason = "Stomach issues",
-                            ReceivedAt = new DateTime(2024, 5, 30, 0, 0, 0, 0, DateTimeKind.Local),
+                            ReceivedAt = new DateTime(2024, 5, 30, 0, 0, 0, 0, DateTimeKind.Utc),
                             ReferringGPId = "44444444-4444-4444-4444-444444444444",
                             SlaBreach = false,
-                            SlaDeadline = new DateTime(2024, 6, 6, 0, 0, 0, 0, DateTimeKind.Local),
-                            SlaPaused = false,
+                            SlaDeadline = new DateTime(2024, 6, 6, 0, 0, 0, 0, DateTimeKind.Utc),
                             SpecialistType = "Gastroenterology",
                             Status = 1,
                             Urgency = 2
                         },
                         new
                         {
-                            Id = new Guid("8da1adc8-e9cf-42ae-af04-0c0d698b9249"),
+                            Id = new Guid("a067e3bf-f429-4735-b716-b281cb605066"),
                             AssignedToUserId = new Guid("33333333-3333-3333-3333-333333333333"),
                             CaseNo = "Ref-000007",
-                            CreatedAt = new DateTime(2024, 5, 25, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2024, 5, 25, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = new Guid("33333333-3333-3333-3333-333333333333"),
                             PatientId = new Guid("bbbbbbbb-5555-5555-5555-555555555555"),
                             PriorityScore = 66.099999999999994,
                             Reason = "Vision deterioration",
-                            ReceivedAt = new DateTime(2024, 5, 25, 0, 0, 0, 0, DateTimeKind.Local),
+                            ReceivedAt = new DateTime(2024, 5, 25, 0, 0, 0, 0, DateTimeKind.Utc),
                             ReferringGPId = "33333333-3333-3333-3333-333333333333",
                             SlaBreach = false,
-                            SlaDeadline = new DateTime(2024, 5, 26, 0, 0, 0, 0, DateTimeKind.Local),
-                            SlaPaused = false,
+                            SlaDeadline = new DateTime(2024, 5, 26, 0, 0, 0, 0, DateTimeKind.Utc),
                             SpecialistType = "Ophthalmology",
                             Status = 4,
                             Urgency = 3
                         },
                         new
                         {
-                            Id = new Guid("58e145b3-e68a-4e3b-9ad4-80b3c2eb6d32"),
+                            Id = new Guid("e10cbe36-9352-4b18-9531-153f862cf276"),
                             AssignedToUserId = new Guid("44444444-4444-4444-4444-444444444444"),
                             CaseNo = "Ref-000008",
-                            CreatedAt = new DateTime(2024, 5, 12, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatedAt = new DateTime(2024, 5, 12, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedByUserId = new Guid("44444444-4444-4444-4444-444444444444"),
                             PatientId = new Guid("cccccccc-5555-5555-5555-555555555555"),
                             PriorityScore = 41.700000000000003,
                             Reason = "Chronic cough",
-                            ReceivedAt = new DateTime(2024, 5, 12, 0, 0, 0, 0, DateTimeKind.Local),
+                            ReceivedAt = new DateTime(2024, 5, 12, 0, 0, 0, 0, DateTimeKind.Utc),
                             ReferringGPId = "44444444-4444-4444-4444-444444444444",
                             SlaBreach = false,
-                            SlaDeadline = new DateTime(2024, 5, 19, 0, 0, 0, 0, DateTimeKind.Local),
-                            SlaPaused = false,
+                            SlaDeadline = new DateTime(2024, 5, 19, 0, 0, 0, 0, DateTimeKind.Utc),
                             SpecialistType = "Pulmonology",
                             Status = 6,
                             Urgency = 2
@@ -867,7 +837,7 @@ namespace ReferWell.Infrastructure.Migrations
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                             Description = "Weight % for urgency in priority score",
                             Key = "weight_urgency",
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Local),
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Value = "50"
                         },
                         new
@@ -875,7 +845,7 @@ namespace ReferWell.Infrastructure.Migrations
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                             Description = "Weight % for wait time in priority score",
                             Key = "weight_waittime",
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Local),
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Value = "30"
                         },
                         new
@@ -883,7 +853,7 @@ namespace ReferWell.Infrastructure.Migrations
                             Id = new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"),
                             Description = "Weight % for patient age in priority score",
                             Key = "weight_patient",
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Local),
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Value = "20"
                         });
                 });

@@ -53,9 +53,10 @@ builder.Services.AddAuthorization();
 // ── SignalR ───────────────────────────────────────────────────────────────────
 builder.Services.AddSignalR();
 
-// ── Mass Comm Background Service ──────────────────────────────────────────────
+// ── Background Services ───────────────────────────────────────────────────────
 builder.Services.AddSingleton<MassCommChannel>();
 builder.Services.AddHostedService<MassCommBackgroundService>();
+builder.Services.AddHostedService<SlaBreachBackgroundService>();
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(opts =>

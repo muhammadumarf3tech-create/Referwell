@@ -13,7 +13,7 @@ const quickLogins = [
 ];
 
 export default function LoginPage() {
-  const { user, login } = useAuth();
+  const { user, login, isLoading } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -47,6 +47,14 @@ export default function LoginPage() {
     catch (err: unknown) { setError(err instanceof Error ? err.message : 'Login failed'); }
     finally { setLoading(false); }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">

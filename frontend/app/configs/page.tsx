@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Settings, Save, Loader2, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import { fetchMenuAccess, hasMenuAccess } from '@/lib/menuAccess';
 
 interface Weight {
   key: string;
@@ -18,7 +19,7 @@ const keyLabels: Record<string, { label: string; color: string; desc: string }> 
 };
 
 export default function ConfigsPage() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   const [weights, setWeights] = useState<Record<string, number>>({
     weight_urgency: 50, weight_waittime: 30, weight_patient: 20
@@ -28,23 +29,33 @@ export default function ConfigsPage() {
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!user) { router.push('/login'); return; }
-    
-    // Check if user has TriageNurse or Admin role
-    const hasAccess = user.roles.includes('Admin') || user.roles.includes('TriageNurse');
-    if (!hasAccess) { router.push('/dashboard'); return; }
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/config/weights`, {
-      headers: { Authorization: `Bearer ${user.token}` }
-    })
-      .then(r => r.json())
-      .then((data: Weight[]) => {
-        const map: Record<string, number> = {};
-        data.forEach(d => { map[d.key] = parseFloat(d.value); });
-        setWeights(map);
+    let cancelled = false;
+    (async () => {
+      const accesses = await fetchMenuAccess(user.token);
+      if (cancelled) return;
+      if (!hasMenuAccess('Priority Config', user.roles, accesses)) {
+        router.push('/dashboard');
+        return;
+      }
+
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/config/weights`, {
+        headers: { Authorization: `Bearer ${user.token}` }
       })
-      .finally(() => setLoading(false));
-  }, [user, router]);
+        .then(r => r.json())
+        .then((data: Weight[]) => {
+          if (cancelled) return;
+          const map: Record<string, number> = {};
+          data.forEach(d => { map[d.key] = parseFloat(d.value); });
+          setWeights(map);
+        })
+        .finally(() => { if (!cancelled) setLoading(false); });
+    })();
+
+    return () => { cancelled = true; };
+  }, [user, isLoading, router]);
 
   const total = Object.values(weights).reduce((a, b) => a + b, 0);
   const isValid = Math.abs(total - 100) < 0.01;
@@ -76,6 +87,14 @@ export default function ConfigsPage() {
       setTimeout(() => setToast(null), 4000);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   if (!user) return null;
 

@@ -19,3 +19,8 @@ public class ReferralNotFoundException : Exception
     public ReferralNotFoundException(Guid referralId)
         : base($"Referral '{referralId}' was not found.") { }
 }
+
+public class InvalidSlaPauseException : Exception
+{
+    public InvalidSlaPauseException(string message) : base(message) { }
+}

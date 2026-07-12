@@ -7,6 +7,7 @@ import {
   Users, Plus, Pencil, UserX, CheckCircle2, XCircle,
   Loader2, Shield, Stethoscope, UserCog, X, Save, AlertCircle, Eye, EyeOff, Search, ChevronDown
 } from 'lucide-react';
+import { fetchMenuAccess, hasMenuAccess } from '@/lib/menuAccess';
 
 interface User {
   id: string;
@@ -36,7 +37,7 @@ const roleIcons: Record<string, React.ReactNode> = {
 type ModalMode = 'create' | 'edit' | null;
 
 export default function UsersPage() {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isLoading } = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,9 +58,20 @@ export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
+    if (isLoading) return;
     if (!currentUser) { router.push('/login'); return; }
-    if (!currentUser.roles.includes('Admin')) { router.push('/dashboard'); return; }
-  }, [currentUser, router]);
+
+    let cancelled = false;
+    (async () => {
+      const accesses = await fetchMenuAccess(currentUser.token);
+      if (cancelled) return;
+      if (!hasMenuAccess('User Management', currentUser.roles, accesses)) {
+        router.push('/dashboard');
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [currentUser, isLoading, router]);
 
   const loadUsers = async (pageOverride?: number) => {
     if (!currentUser) return;
@@ -86,14 +98,20 @@ export default function UsersPage() {
     }
   };
 
+  // Reset page to 1 when searchQuery changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  // Fetch when page or searchQuery changes
   useEffect(() => {
     if (!currentUser) return;
     const delayDebounceFn = setTimeout(() => {
-      loadUsers(1);
+      loadUsers(currentPage);
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [currentUser, searchQuery]);
+  }, [currentUser, searchQuery, currentPage]);
 
   const showToast = (type: 'success'|'error', msg: string) => {
     setToast({ type, msg });
@@ -258,6 +276,14 @@ export default function UsersPage() {
       setConfirmDeactivateId(null);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
