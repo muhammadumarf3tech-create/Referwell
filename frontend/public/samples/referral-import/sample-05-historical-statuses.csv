@@ -1,0 +1,21 @@
+NhiNumber,PatientName,DateOfBirth,PatientEmail,PatientPhone,Gender,SpecialistType,Reason,Urgency,Status,ReceivedAt,AssignedToEmail,ReferringGpEmail,LegacyCaseNo
+IMP5001,Historic Patient A,1940-01-10,hist.a@example.com,+64 21 500 5001,Female,Cardiology,Completed historic cardiac case,Urgent,Completed,2024-01-15T09:00:00,nurse@referwell.com,gp1@referwell.com,LEG-H-5001
+IMP5002,Historic Patient B,1942-02-11,hist.b@example.com,+64 21 500 5002,Male,Orthopedics,Declined historic ortho case,Routine,Declined,2024-02-20T10:00:00,nurse@referwell.com,gp2@referwell.com,LEG-H-5002
+IMP5003,Historic Patient C,1944-03-12,hist.c@example.com,+64 21 500 5003,Female,Neurology,Booked historic neuro case,SemiUrgent,Booked,2024-03-10T11:00:00,nurse@referwell.com,gp1@referwell.com,LEG-H-5003
+IMP5004,Historic Patient D,1946-04-13,hist.d@example.com,+64 21 500 5004,Male,Dermatology,Accepted historic derm case,Routine,Accepted,2024-04-05T12:00:00,nurse@referwell.com,gp2@referwell.com,LEG-H-5004
+IMP5005,Historic Patient E,1948-05-14,hist.e@example.com,+64 21 500 5005,Female,Oncology,Completed oncology historic,Urgent,Completed,2024-05-18T13:00:00,nurse@referwell.com,gp1@referwell.com,LEG-H-5005
+IMP5006,Historic Patient F,1950-06-15,hist.f@example.com,+64 21 500 5006,Male,Gastroenterology,Declined gastro historic,SemiUrgent,Declined,2024-06-22T14:00:00,nurse@referwell.com,gp2@referwell.com,LEG-H-5006
+IMP5007,Historic Patient G,1952-07-16,hist.g@example.com,+64 21 500 5007,Female,Ophthalmology,Booked eye historic,Routine,Booked,2024-07-08T15:00:00,nurse@referwell.com,gp1@referwell.com,LEG-H-5007
+IMP5008,Historic Patient H,1954-08-17,hist.h@example.com,+64 21 500 5008,Male,Pulmonology,Completed lung historic,Urgent,Completed,2024-08-14T09:30:00,nurse@referwell.com,gp2@referwell.com,LEG-H-5008
+IMP5009,Historic Patient I,1956-09-18,hist.i@example.com,+64 21 500 5009,Female,Cardiology,Accepted cardiac historic,SemiUrgent,Accepted,2024-09-03T10:30:00,nurse@referwell.com,gp1@referwell.com,LEG-H-5009
+IMP5010,Historic Patient J,1958-10-19,hist.j@example.com,+64 21 500 5010,Male,Orthopedics,Triaged ortho historic,Routine,Triaged,2024-10-11T11:30:00,nurse@referwell.com,gp2@referwell.com,LEG-H-5010
+IMP5011,Historic Patient K,1960-11-20,hist.k@example.com,+64 21 500 5011,Female,Neurology,Completed neuro historic,Urgent,Completed,2024-11-19T12:30:00,nurse@referwell.com,gp1@referwell.com,LEG-H-5011
+IMP5012,Historic Patient L,1962-12-21,hist.l@example.com,+64 21 500 5012,Male,Dermatology,Declined derm historic,Routine,Declined,2024-12-02T13:30:00,nurse@referwell.com,gp2@referwell.com,LEG-H-5012
+IMP5013,Historic Patient M,1964-01-22,hist.m@example.com,+64 21 500 5013,Female,Oncology,Booked oncology historic,SemiUrgent,Booked,2025-01-07T14:30:00,nurse@referwell.com,gp1@referwell.com,LEG-H-5013
+IMP5014,Historic Patient N,1966-02-23,hist.n@example.com,+64 21 500 5014,Male,Gastroenterology,Accepted gastro historic,Urgent,Accepted,2025-02-16T15:30:00,nurse@referwell.com,gp2@referwell.com,LEG-H-5014
+IMP5015,Historic Patient O,1968-03-24,hist.o@example.com,+64 21 500 5015,Female,Ophthalmology,Completed eye historic,Routine,Completed,2025-03-21T09:15:00,nurse@referwell.com,gp1@referwell.com,LEG-H-5015
+IMP5016,Historic Patient P,1970-04-25,hist.p@example.com,+64 21 500 5016,Male,Pulmonology,Triaged lung historic,SemiUrgent,Triaged,2025-04-09T10:15:00,nurse@referwell.com,gp2@referwell.com,LEG-H-5016
+IMP5017,Historic Patient Q,1972-05-26,hist.q@example.com,+64 21 500 5017,Female,Cardiology,Received cardiac historic,Urgent,Received,2025-05-13T11:15:00,nurse@referwell.com,gp1@referwell.com,LEG-H-5017
+IMP5018,Historic Patient R,1974-06-27,hist.r@example.com,+64 21 500 5018,Male,Orthopedics,Completed ortho historic,Routine,Completed,2025-06-04T12:15:00,nurse@referwell.com,gp2@referwell.com,LEG-H-5018
+IMP5019,Historic Patient S,1976-07-28,hist.s@example.com,+64 21 500 5019,Female,Neurology,Declined neuro historic,SemiUrgent,Declined,2025-07-22T13:15:00,nurse@referwell.com,gp1@referwell.com,LEG-H-5019
+IMP5020,Historic Patient T,1978-08-29,hist.t@example.com,+64 21 500 5020,Male,Dermatology,Booked derm historic,Routine,Booked,2025-08-28T14:15:00,nurse@referwell.com,gp2@referwell.com,LEG-H-5020

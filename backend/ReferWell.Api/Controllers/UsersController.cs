@@ -5,6 +5,8 @@ using ReferWell.Api.Authorization;
 using ReferWell.Domain.Entities;
 using ReferWell.Domain.Enums;
 using ReferWell.Infrastructure.Data;
+using ReferWell.Infrastructure.Services;
+using System.Security.Claims;
 
 namespace ReferWell.Api.Controllers;
 
@@ -14,12 +16,36 @@ namespace ReferWell.Api.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly SecurityAuditService _audit;
 
-    public UsersController(AppDbContext db) => _db = db;
+    public UsersController(AppDbContext db, SecurityAuditService audit)
+    {
+        _db = db;
+        _audit = audit;
+    }
+
+    private Guid CurrentUserId =>
+        Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)!);
+
+    private async Task<bool> HasUserManagementAccessAsync()
+    {
+        var roleNames = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+        var roles = new List<UserRole>();
+        foreach (var name in roleNames)
+        {
+            if (Enum.TryParse<UserRole>(name, ignoreCase: true, out var role))
+                roles.Add(role);
+        }
+
+        return await _db.RoleMenuAccesses.AsNoTracking()
+            .AnyAsync(m => m.MenuItem == "User Management" && m.HasAccess && roles.Contains(m.Role));
+    }
 
     [HttpGet]
     public async Task<IActionResult> GetUsers([FromQuery] string? search, [FromQuery] int? page, [FromQuery] int? pageSize)
     {
+        var canManage = await HasUserManagementAccessAsync();
         var query = _db.Users.Include(u => u.UserRoles).AsQueryable();
 
         if (!string.IsNullOrEmpty(search))
@@ -28,64 +54,44 @@ public class UsersController : ControllerBase
             query = query.Where(u => u.FullName.Contains(cleanSearch) || u.Email.Contains(cleanSearch));
         }
 
+        var size = Math.Clamp(pageSize ?? 15, 1, 100);
+
         if (page.HasValue)
         {
-            var size = pageSize ?? 15;
+            var pageNum = Math.Max(1, page.Value);
             var totalCount = await query.CountAsync();
-            var items = await query
+            var raw = await query
                 .OrderByDescending(u => u.CreatedAt)
-                .Skip((page.Value - 1) * size)
+                .Skip((pageNum - 1) * size)
                 .Take(size)
-                .Select(u => new
-                {
-                    u.Id, u.FullName, u.Email,
-                    Roles = u.UserRoles.Select(ur => ur.Role.ToString()).ToList(),
-                    u.IsActive, u.CreatedAt, u.LastLoginAt,
-                    u.Title, u.Gender, u.PhoneNumber
-                })
                 .ToListAsync();
 
+            var items = raw.Select(u => ProjectUser(u, canManage)).ToList();
             var totalPages = (int)Math.Ceiling((double)totalCount / size);
 
             return Ok(new
             {
                 items,
                 totalCount,
-                page = page.Value,
+                page = pageNum,
                 pageSize = size,
                 totalPages
             });
         }
-        else
-        {
-            var items = await query
-                .OrderByDescending(u => u.CreatedAt)
-                .Select(u => new
-                {
-                    u.Id, u.FullName, u.Email,
-                    Roles = u.UserRoles.Select(ur => ur.Role.ToString()).ToList(),
-                    u.IsActive, u.CreatedAt, u.LastLoginAt,
-                    u.Title, u.Gender, u.PhoneNumber
-                })
-                .ToListAsync();
-            return Ok(items);
-        }
+
+        var all = await query.OrderByDescending(u => u.CreatedAt).ToListAsync();
+        return Ok(all.Select(u => ProjectUser(u, canManage)));
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetUser(Guid id)
     {
+        var canManage = await HasUserManagementAccessAsync();
         var user = await _db.Users
             .Include(u => u.UserRoles)
             .FirstOrDefaultAsync(u => u.Id == id);
         if (user == null) return NotFound();
-        return Ok(new
-        {
-            user.Id, user.FullName, user.Email,
-            Roles = user.UserRoles.Select(ur => ur.Role.ToString()).ToList(),
-            user.IsActive, user.CreatedAt, user.LastLoginAt,
-            user.Title, user.Gender, user.PhoneNumber
-        });
+        return Ok(ProjectUser(user, canManage));
     }
 
     [HttpPost]
@@ -115,7 +121,8 @@ public class UsersController : ControllerBase
 
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetUser), new { id = user.Id }, new { user.Id, user.FullName, user.Email, Roles = user.UserRoles.Select(ur => ur.Role.ToString()).ToList(), user.Title, user.Gender, user.PhoneNumber });
+        await _audit.LogAsync("UserCreated", CurrentUserId, details: $"Created user {user.Email}");
+        return CreatedAtAction(nameof(GetUser), new { id = user.Id }, ProjectUser(user, includeSensitive: true));
     }
 
     [HttpPut("{id}")]
@@ -152,8 +159,6 @@ public class UsersController : ControllerBase
                 .Select(ur => ur.Role)
                 .ToHashSet();
 
-            // Explicitly track deletes and inserts. This avoids relying on
-            // relationship fix-up after a role has been removed from the navigation collection.
             _db.UserRoles.RemoveRange(rolesToRemove);
 
             var rolesToAdd = requestedRoles
@@ -166,12 +171,17 @@ public class UsersController : ControllerBase
             await _db.UserRoles.AddRangeAsync(rolesToAdd);
         }
 
-        if (!string.IsNullOrWhiteSpace(req.NewPassword))
+        var passwordChanged = !string.IsNullOrWhiteSpace(req.NewPassword);
+        if (passwordChanged)
         {
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.NewPassword);
         }
 
         await _db.SaveChangesAsync();
+        await _audit.LogAsync(
+            "UserUpdated",
+            CurrentUserId,
+            details: $"Updated user {user.Email}" + (passwordChanged ? " (password changed)" : ""));
         return Ok(new { message = "User updated." });
     }
 
@@ -183,7 +193,38 @@ public class UsersController : ControllerBase
         if (user == null) return NotFound();
         user.IsActive = false;
         await _db.SaveChangesAsync();
+        await _audit.LogAsync("UserDeactivated", CurrentUserId, details: $"Deactivated user {user.Email}");
         return Ok(new { message = "User deactivated." });
+    }
+
+    private static object ProjectUser(ApplicationUser user, bool includeSensitive)
+    {
+        if (includeSensitive)
+        {
+            return new
+            {
+                user.Id,
+                user.FullName,
+                user.Email,
+                Roles = user.UserRoles.Select(ur => ur.Role.ToString()).ToList(),
+                user.IsActive,
+                user.CreatedAt,
+                user.LastLoginAt,
+                user.Title,
+                user.Gender,
+                user.PhoneNumber
+            };
+        }
+
+        // Assignees / dropdowns — no PII beyond display name
+        return new
+        {
+            user.Id,
+            user.FullName,
+            Roles = user.UserRoles.Select(ur => ur.Role.ToString()).ToList(),
+            user.IsActive,
+            user.Title
+        };
     }
 }
 

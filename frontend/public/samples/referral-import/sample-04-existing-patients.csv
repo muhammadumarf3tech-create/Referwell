@@ -1,0 +1,21 @@
+NhiNumber,PatientName,DateOfBirth,PatientEmail,PatientPhone,Gender,SpecialistType,Reason,Urgency,Status,ReceivedAt,AssignedToEmail,ReferringGpEmail,LegacyCaseNo
+ABC1234,Alice Martin,1955-03-10,alice.martin@example.com,+64 21 555 0101,Female,Cardiology,Follow-up for known patient Alice,SemiUrgent,Received,2025-10-10T09:00:00,nurse@referwell.com,gp1@referwell.com,LEG-S-4001
+DEF5678,Bob Clarke,1970-07-22,bob.clarke@example.com,+64 22 555 0102,Male,Orthopedics,Knee review for seeded patient Bob,Routine,Triaged,2025-10-11T10:00:00,nurse@referwell.com,gp1@referwell.com,LEG-S-4002
+GHI9012,Carol Ahmed,1940-11-05,carol.ahmed@example.com,+64 27 555 0103,Female,Neurology,Headache review for Carol,Urgent,Accepted,2025-10-12T11:00:00,nurse@referwell.com,gp2@referwell.com,LEG-S-4003
+JKL3456,David Johnson,1985-02-14,david.johnson@example.com,+64 29 555 0104,Male,Dermatology,Rash follow-up for David,Routine,Booked,2025-09-15T12:00:00,nurse@referwell.com,gp2@referwell.com,LEG-S-4004
+MNO7890,Eva Rodriguez,1932-08-30,eva.rodriguez@example.com,+64 21 555 0105,Female,Oncology,Oncology review for Eva,Urgent,Received,2025-11-01T08:00:00,nurse@referwell.com,gp1@referwell.com,LEG-S-4005
+PQR1234,Frank Lee,1960-04-18,frank.lee@example.com,+64 22 555 0106,Male,Gastroenterology,Stomach issues for Frank,SemiUrgent,Triaged,2025-10-20T09:00:00,nurse@referwell.com,gp2@referwell.com,LEG-S-4006
+STU5678,Grace Kim,1978-12-03,grace.kim@example.com,+64 27 555 0107,Female,Ophthalmology,Vision review for Grace,Routine,Accepted,2025-10-18T10:00:00,nurse@referwell.com,gp1@referwell.com,LEG-S-4007
+VWX9012,Henry Smith,1945-06-25,henry.smith@example.com,+64 29 555 0108,Male,Pulmonology,Cough review for Henry,SemiUrgent,Completed,2025-08-20T11:00:00,nurse@referwell.com,gp2@referwell.com,LEG-S-4008
+IMP4009,New Patient Aria,1991-03-03,aria.new@example.com,+64 21 400 4009,Female,Cardiology,New patient cardiology referral,Urgent,Received,2025-11-05T09:00:00,nurse@referwell.com,gp1@referwell.com,LEG-S-4009
+IMP4010,New Patient Beau,1987-06-06,beau.new@example.com,+64 21 400 4010,Male,Neurology,New patient neurology referral,SemiUrgent,Triaged,2025-10-25T10:00:00,nurse@referwell.com,gp2@referwell.com,LEG-S-4010
+ABC1234,Alice Martin,1955-03-10,alice.martin@example.com,+64 21 555 0101,Female,Pulmonology,Second referral for Alice,Routine,Received,2025-11-06T11:00:00,nurse@referwell.com,gp1@referwell.com,LEG-S-4011
+IMP4012,New Patient Cora,1975-09-09,cora.new@example.com,+64 21 400 4012,Female,Dermatology,New patient derm referral,Routine,Booked,2025-09-30T12:00:00,nurse@referwell.com,gp2@referwell.com,LEG-S-4012
+DEF5678,Bob Clarke,1970-07-22,bob.clarke@example.com,+64 22 555 0102,Male,Cardiology,Cardiac screen for Bob,SemiUrgent,Accepted,2025-10-28T13:00:00,nurse@referwell.com,gp1@referwell.com,LEG-S-4013
+IMP4014,New Patient Drew,1968-12-12,drew.new@example.com,+64 21 400 4014,Male,Orthopedics,New patient ortho referral,Routine,Received,2025-11-02T14:00:00,nurse@referwell.com,gp2@referwell.com,LEG-S-4014
+GHI9012,Carol Ahmed,1940-11-05,carol.ahmed@example.com,+64 27 555 0103,Female,Ophthalmology,Eye check for Carol,Routine,Triaged,2025-10-30T15:00:00,nurse@referwell.com,gp1@referwell.com,LEG-S-4015
+IMP4016,New Patient Eden,1995-01-01,eden.new@example.com,+64 21 400 4016,Female,Oncology,New patient oncology referral,Urgent,Received,2025-11-07T08:30:00,nurse@referwell.com,gp2@referwell.com,LEG-S-4016
+JKL3456,David Johnson,1985-02-14,david.johnson@example.com,+64 29 555 0104,Male,Gastroenterology,GI review for David,SemiUrgent,Accepted,2025-10-15T09:30:00,nurse@referwell.com,gp1@referwell.com,LEG-S-4017
+IMP4018,New Patient Flynn,1955-05-05,flynn.new@example.com,+64 21 400 4018,Male,Pulmonology,New patient lung referral,Urgent,Triaged,2025-11-04T10:30:00,nurse@referwell.com,gp2@referwell.com,LEG-S-4018
+MNO7890,Eva Rodriguez,1932-08-30,eva.rodriguez@example.com,+64 21 555 0105,Female,Neurology,Neuro review for Eva,SemiUrgent,Booked,2025-09-25T11:30:00,nurse@referwell.com,gp1@referwell.com,LEG-S-4019
+IMP4020,New Patient Gia,1982-08-08,gia.new@example.com,+64 21 400 4020,Female,Cardiology,New patient cardiac referral,Routine,Received,2025-11-08T12:30:00,nurse@referwell.com,gp2@referwell.com,LEG-S-4020

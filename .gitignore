@@ -2,6 +2,11 @@
 temp_docx/
 temp_docx.zip
 
+# Local secrets (JWT keys, connection strings) — keep examples only
+**/appsettings.Development.json
+**/appsettings.*.local.json
+**/secrets.json
+
 # .NET / Visual Studio
 [Bb]in/
 [Oo]bj/
@@ -38,6 +43,12 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 *.tsbuildinfo
+
+# Playwright
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+frontend/playwright/.cache/
 
 # OS metadata
 Thumbs.db

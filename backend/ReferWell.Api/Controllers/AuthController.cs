@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using ReferWell.Domain.Entities;
 using ReferWell.Infrastructure.Data;
+using ReferWell.Infrastructure.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -15,11 +16,13 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly IConfiguration _config;
+    private readonly SecurityAuditService _audit;
 
-    public AuthController(AppDbContext db, IConfiguration config)
+    public AuthController(AppDbContext db, IConfiguration config, SecurityAuditService audit)
     {
         _db = db;
         _config = config;
+        _audit = audit;
     }
 
     public record LoginRequest(string Email, string Password);
@@ -35,13 +38,15 @@ public class AuthController : ControllerBase
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
+            await _audit.LogAsync("LoginFailed", actorEmail: request.Email, details: "Invalid credentials");
             // OWASP: Generic error message — don't reveal if email or password is wrong
             return Unauthorized(new { message = "Invalid credentials." });
         }
 
-        // Update last login
         user.LastLoginAt = DateTime.Now;
         await _db.SaveChangesAsync();
+
+        await _audit.LogAsync("LoginSucceeded", user.Id, user.Email);
 
         var token = GenerateJwtToken(user);
         return Ok(new LoginResponse(token, user.FullName, user.Email, user.UserRoles.Select(ur => ur.Role.ToString()).ToList(), user.Title));

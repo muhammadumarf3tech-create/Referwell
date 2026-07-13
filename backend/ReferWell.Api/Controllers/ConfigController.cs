@@ -6,6 +6,8 @@ using ReferWell.Api.Authorization;
 using ReferWell.Domain.Services;
 using ReferWell.Infrastructure.Data;
 using ReferWell.Infrastructure.Hubs;
+using ReferWell.Infrastructure.Services;
+using System.Security.Claims;
 
 namespace ReferWell.Api.Controllers;
 
@@ -17,12 +19,18 @@ public class ConfigController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly IHubContext<QueueHub> _hub;
+    private readonly SecurityAuditService _audit;
 
-    public ConfigController(AppDbContext db, IHubContext<QueueHub> hub)
+    public ConfigController(AppDbContext db, IHubContext<QueueHub> hub, SecurityAuditService audit)
     {
         _db = db;
         _hub = hub;
+        _audit = audit;
     }
+
+    private Guid CurrentUserId =>
+        Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)!);
 
     [HttpGet("weights")]
     public async Task<IActionResult> GetWeights()
@@ -36,7 +44,7 @@ public class ConfigController : ControllerBase
     [HttpPost("weights")]
     public async Task<IActionResult> UpdateWeights([FromBody] UpdateWeightsRequest request)
     {
-        // Validate weights sum to 100
+        // Validate weights sum to 100 (also enforced by FluentValidation)
         var total = request.WeightUrgency + request.WeightWaittime + request.WeightPatient;
         if (Math.Abs(total - 100) > 0.01)
             return BadRequest(new { message = "Weights must sum to 100%." });
@@ -52,7 +60,6 @@ public class ConfigController : ControllerBase
         SetConfig("weight_waittime", request.WeightWaittime);
         SetConfig("weight_patient", request.WeightPatient);
 
-        // Recalculate all active referral scores
         var referrals = await _db.Referrals
             .Include(r => r.Patient)
             .Where(r => r.Status != Domain.Enums.ReferralStatus.Completed
@@ -68,7 +75,11 @@ public class ConfigController : ControllerBase
 
         await _db.SaveChangesAsync();
 
-        // Broadcast queue resorted event to all clients
+        await _audit.LogAsync(
+            "PriorityWeightsUpdated",
+            CurrentUserId,
+            details: $"urgency={request.WeightUrgency}, wait={request.WeightWaittime}, patient={request.WeightPatient}");
+
         await _hub.Clients.Group("QueueGroup").SendAsync("QueueResorted", new
         {
             weightUrgency = request.WeightUrgency,

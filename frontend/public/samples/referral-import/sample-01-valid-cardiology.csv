@@ -1,0 +1,21 @@
+NhiNumber,PatientName,DateOfBirth,PatientEmail,PatientPhone,Gender,SpecialistType,Reason,Urgency,Status,ReceivedAt,AssignedToEmail,ReferringGpEmail,LegacyCaseNo
+IMP1001,Olivia Bennett,1968-04-12,olivia.bennett@example.com,+64 21 700 1001,Female,Cardiology,Exertional chest pain,Urgent,Received,2025-11-02T09:15:00,nurse@referwell.com,gp1@referwell.com,LEG-C-1001
+IMP1002,Noah Patel,1952-08-21,noah.patel@example.com,+64 21 700 1002,Male,Cardiology,Palpitations with syncope,Urgent,Triaged,2025-10-28T11:00:00,nurse@referwell.com,gp1@referwell.com,LEG-C-1002
+IMP1003,Amelia Chen,1975-01-05,amelia.chen@example.com,+64 21 700 1003,Female,Cardiology,Shortness of breath on exertion,SemiUrgent,Accepted,2025-10-15T14:30:00,nurse@referwell.com,gp2@referwell.com,LEG-C-1003
+IMP1004,Liam OConnor,1948-12-30,liam.oconnor@example.com,+64 21 700 1004,Male,Cardiology,Unstable angina symptoms,Urgent,Received,2025-11-10T08:00:00,nurse@referwell.com,gp1@referwell.com,LEG-C-1004
+IMP1005,Sophia Ngata,1982-06-18,sophia.ngata@example.com,+64 21 700 1005,Female,Cardiology,Family history and elevated lipids,Routine,Booked,2025-09-01T10:00:00,nurse@referwell.com,gp2@referwell.com,LEG-C-1005
+IMP1006,Mason Reid,1960-03-09,mason.reid@example.com,+64 21 700 1006,Male,Cardiology,Atrial fibrillation for review,SemiUrgent,Accepted,2025-10-20T16:45:00,nurse@referwell.com,gp1@referwell.com,LEG-C-1006
+IMP1007,Isla Thompson,1971-09-14,isla.thompson@example.com,+64 21 700 1007,Female,Cardiology,Post-MI follow-up referral,SemiUrgent,Triaged,2025-10-25T09:20:00,nurse@referwell.com,gp2@referwell.com,LEG-C-1007
+IMP1008,Ethan Walker,1955-11-02,ethan.walker@example.com,+64 21 700 1008,Male,Cardiology,Heart failure optimisation,Urgent,Received,2025-11-08T13:10:00,nurse@referwell.com,gp1@referwell.com,LEG-C-1008
+IMP1009,Mia Fraser,1988-07-27,mia.fraser@example.com,+64 21 700 1009,Female,Cardiology,Murmur evaluation,Routine,Received,2025-11-01T11:30:00,nurse@referwell.com,gp2@referwell.com,LEG-C-1009
+IMP1010,Jack Morrison,1943-02-16,jack.morrison@example.com,+64 21 700 1010,Male,Cardiology,Recurrent angina despite therapy,Urgent,Accepted,2025-10-12T08:45:00,nurse@referwell.com,gp1@referwell.com,LEG-C-1010
+IMP1011,Ava Singh,1966-05-22,ava.singh@example.com,+64 21 700 1011,Female,Cardiology,Hypertrophic cardiomyopathy query,SemiUrgent,Booked,2025-09-18T15:00:00,nurse@referwell.com,gp2@referwell.com,LEG-C-1011
+IMP1012,William Park,1979-10-08,william.park@example.com,+64 21 700 1012,Male,Cardiology,Abnormal ECG with chest discomfort,Urgent,Triaged,2025-11-05T07:50:00,nurse@referwell.com,gp1@referwell.com,LEG-C-1012
+IMP1013,Charlotte Lee,1958-01-29,charlotte.lee@example.com,+64 21 700 1013,Female,Cardiology,Pericarditis follow-up,Routine,Completed,2025-08-10T12:00:00,nurse@referwell.com,gp2@referwell.com,LEG-C-1013
+IMP1014,James Brown,1963-04-04,james.brown@example.com,+64 21 700 1014,Male,Cardiology,Valve disease assessment,SemiUrgent,Accepted,2025-10-05T10:15:00,nurse@referwell.com,gp1@referwell.com,LEG-C-1014
+IMP1015,Harper White,1990-08-19,harper.white@example.com,+64 21 700 1015,Female,Cardiology,SVT for ablation consideration,SemiUrgent,Received,2025-11-03T14:00:00,nurse@referwell.com,gp2@referwell.com,LEG-C-1015
+IMP1016,Lucas Green,1949-12-11,lucas.green@example.com,+64 21 700 1016,Male,Cardiology,Ischaemic heart disease review,Urgent,Declined,2025-09-22T09:40:00,nurse@referwell.com,gp1@referwell.com,LEG-C-1016
+IMP1017,Ella Scott,1973-06-03,ella.scott@example.com,+64 21 700 1017,Female,Cardiology,Chest pain atypical features,Routine,Triaged,2025-10-30T11:20:00,nurse@referwell.com,gp2@referwell.com,LEG-C-1017
+IMP1018,Benjamin Hall,1951-09-25,benjamin.hall@example.com,+64 21 700 1018,Male,Cardiology,Device interrogation abnormal,Urgent,Received,2025-11-09T16:00:00,nurse@referwell.com,gp1@referwell.com,LEG-C-1018
+IMP1019,Grace Adams,1984-03-17,grace.adams@example.com,+64 21 700 1019,Female,Cardiology,Pregnancy-related cardiac concern,SemiUrgent,Accepted,2025-10-18T08:30:00,nurse@referwell.com,gp2@referwell.com,LEG-C-1019
+IMP1020,Henry King,1946-07-07,henry.king@example.com,+64 21 700 1020,Male,Cardiology,Congestive symptoms worsening,Urgent,Booked,2025-10-08T13:45:00,nurse@referwell.com,gp1@referwell.com,LEG-C-1020

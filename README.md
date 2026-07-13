@@ -11,6 +11,9 @@ ReferWell is an enterprise referral triage and SLA queue management system desig
 2. **Node.js (v20+) & npm**
 3. **Microsoft SQL Server (LocalDB or SQLEXPRESS)** with Windows Authentication.
 
+### Local secrets (JWT)
+Copy `backend/ReferWell.Api/appsettings.Development.json.example` to `appsettings.Development.json` and set a long random `Jwt:Key` (and your SQL connection string). That file is gitignored. Alternatively set environment variable `Jwt__Key`. See also `OWASP_TOP10_SELF_ASSESSMENT.md`.
+
 ### One-Command Startup
 ReferWell includes a single PowerShell script that restores dependencies, applies Entity Framework migrations, seeds default users/data, and starts both the backend API and Next.js frontend concurrently.
 

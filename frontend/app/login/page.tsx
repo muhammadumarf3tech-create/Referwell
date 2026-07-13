@@ -5,12 +5,12 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Activity, Eye, EyeOff, Lock, Mail, AlertCircle, Loader2 } from 'lucide-react';
 
-const quickLogins = [
+const quickLogins = process.env.NODE_ENV === 'development' ? [
   { label: 'Admin',       email: 'admin@referwell.com', password: 'Admin@123',  color: 'text-purple-600 border-purple-200 hover:bg-purple-50' },
   { label: 'Triage Nurse', email: 'nurse@referwell.com', password: 'Nurse@123', color: 'text-blue-600 border-blue-200 hover:bg-blue-50' },
   { label: 'GP (Dr. Wilson)', email: 'gp1@referwell.com', password: 'Gp1@1234', color: 'text-emerald-600 border-emerald-200 hover:bg-emerald-50' },
   { label: 'GP (Dr. Hart)', email: 'gp2@referwell.com', password: 'Gp2@1234', color: 'text-teal-600 border-teal-200 hover:bg-teal-50' },
-];
+] : [];
 
 export default function LoginPage() {
   const { user, login, isLoading } = useAuth();
@@ -134,7 +134,8 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Quick Login Buttons */}
+          {/* Quick Login Buttons (Development only) */}
+          {quickLogins.length > 0 && (
           <div className="mt-6 pt-6 border-t border-slate-100">
             <p className="text-xs text-slate-400 mb-3 text-center font-bold uppercase tracking-wider">Quick login for testing</p>
             <div className="grid grid-cols-2 gap-2">
@@ -150,6 +151,7 @@ export default function LoginPage() {
               ))}
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>

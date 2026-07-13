@@ -10,6 +10,9 @@ public class Referral
     public Patient? Patient { get; set; }
     public string CaseNo { get; set; } = string.Empty;
 
+    /// <summary>True when the referral was created via CSV/legacy bulk import.</summary>
+    public bool IsMigrated { get; set; } = false;
+
     public string ReferringGPId { get; set; } = string.Empty; // FK to ApplicationUser
     public Guid CreatedByUserId { get; set; }
     public ApplicationUser? CreatedByUser { get; set; }

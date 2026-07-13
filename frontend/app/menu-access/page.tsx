@@ -13,7 +13,7 @@ const roleEnumMap: Record<string, number> = {
   'GP': 3
 };
 
-const menuItems = ['Dashboard', 'Priority Config', 'Mass Communications', 'User Management', 'Menu Access'];
+const menuItems = ['Dashboard', 'Priority Config', 'Mass Communications', 'User Management', 'Menu Access', 'Referral Import'];
 
 export default function MenuAccessPage() {
   const { user, isLoading } = useAuth();

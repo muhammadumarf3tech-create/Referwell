@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace ReferWell.Infrastructure.Hubs;
 
+[Authorize]
 public class QueueHub : Hub
 {
     public async Task JoinQueue()

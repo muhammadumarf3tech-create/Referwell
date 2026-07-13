@@ -115,12 +115,15 @@ ReferWell replaces fragmented legacy databases and spreadsheets. It operates as 
 
 ### 4.1 Security Baseline (OWASP Compliance)
 *   **NFR-1.1**: Direct database queries are prohibited. All database communication must run through EF Core parameterized queries to prevent SQL Injection.
-*   **NFR-1.2**: APIs must reject unauthorized calls by decorating controllers/actions with `[Authorize(Roles = "...")]` attributes.
+*   **NFR-1.2**: APIs must reject unauthorized calls by decorating controllers/actions with `[Authorize]` / `[Authorize(Roles = "...")]` / `[MenuAuthorize]` attributes.
 *   **NFR-1.3**: Presentation layouts must hide navigational elements (e.g. User Management links) for roles lacking matching permissions.
 *   **NFR-1.4**: Security headers must be sent on all responses:
     *   `X-Frame-Options: DENY` (Clickjacking prevention).
     *   `X-Content-Type-Options: nosniff` (MIME sniffing prevention).
     *   `X-XSS-Protection: 1; mode=block` (Cross-Site Scripting protection).
+*   **NFR-1.5**: Secrets (JWT signing key, environment-specific connection strings) must not be committed in base configuration; use User Secrets, environment variables, or gitignored Development settings.
+*   **NFR-1.6**: Server-side FluentValidation must cover write DTOs; PDF attachments limited to 20 MB with type/signature checks.
+*   **NFR-1.7**: Maintain a short OWASP Top 10 self-assessment (`OWASP_TOP10_SELF_ASSESSMENT.md`).
 
 ### 4.2 Usability & Styling Controls
 *   **NFR-2.1**: The layout must follow a professional, modern dark-theme aesthetic using glassmorphism and Tailwind CSS grids.

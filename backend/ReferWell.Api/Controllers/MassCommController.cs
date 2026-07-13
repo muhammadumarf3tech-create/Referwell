@@ -19,11 +19,13 @@ public class MassCommController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly MassCommChannel _channel;
+    private readonly SecurityAuditService _audit;
 
-    public MassCommController(AppDbContext db, MassCommChannel channel)
+    public MassCommController(AppDbContext db, MassCommChannel channel, SecurityAuditService audit)
     {
         _db = db;
         _channel = channel;
+        _audit = audit;
     }
 
     private Guid CurrentUserId =>
@@ -141,6 +143,11 @@ public class MassCommController : ControllerBase
 
         _db.MassCommCampaigns.Add(campaign);
         await _db.SaveChangesAsync();
+
+        await _audit.LogAsync(
+            "MassCommCampaignCreated",
+            CurrentUserId,
+            details: $"Campaign '{campaign.Name}' with {campaign.Messages.Count} messages");
 
         // Enqueue for throttled background processing
         await _channel.Writer.WriteAsync(new MassCommJob(campaign.Id, campaign.Messages.ToList()));

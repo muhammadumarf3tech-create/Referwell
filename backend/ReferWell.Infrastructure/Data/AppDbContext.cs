@@ -15,9 +15,12 @@ public class AppDbContext : DbContext
     public DbSet<Referral> Referrals => Set<Referral>();
     public DbSet<ReferralAttachment> ReferralAttachments => Set<ReferralAttachment>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<SecurityAuditEvent> SecurityAuditEvents => Set<SecurityAuditEvent>();
     public DbSet<SystemConfig> SystemConfigs => Set<SystemConfig>();
     public DbSet<MassCommCampaign> MassCommCampaigns => Set<MassCommCampaign>();
     public DbSet<MassCommMessage> MassCommMessages => Set<MassCommMessage>();
+    public DbSet<ReferralImportBatch> ReferralImportBatches => Set<ReferralImportBatch>();
+    public DbSet<ReferralImportRow> ReferralImportRows => Set<ReferralImportRow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -69,8 +72,9 @@ public class AppDbContext : DbContext
             e.Property(r => r.RowVersion).IsRowVersion().IsConcurrencyToken();
             e.Property(r => r.SpecialistType).HasMaxLength(100).IsRequired();
             e.Property(r => r.Reason).HasMaxLength(2000);
-            e.Property(r => r.CaseNo).HasMaxLength(20).IsRequired();
+            e.Property(r => r.CaseNo).HasMaxLength(50).IsRequired();
             e.Property(r => r.SlaPauseReason).HasMaxLength(100);
+            e.HasIndex(r => r.CaseNo).IsUnique();
 
             e.HasOne(r => r.CreatedByUser)
                 .WithMany(u => u.CreatedReferrals)
@@ -118,6 +122,22 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        // ── SecurityAuditEvent ───────────────────────────────────────────────
+        modelBuilder.Entity<SecurityAuditEvent>(e =>
+        {
+            e.ToTable("tblSecurityAuditEvent");
+            e.HasKey(a => a.Id);
+            e.Property(a => a.Action).HasMaxLength(100).IsRequired();
+            e.Property(a => a.ActorEmail).HasMaxLength(256);
+            e.Property(a => a.Details).HasMaxLength(2000);
+            e.Property(a => a.IpAddress).HasMaxLength(64);
+            e.HasOne(a => a.ActorUser)
+                .WithMany()
+                .HasForeignKey(a => a.ActorUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            e.HasIndex(a => a.Timestamp);
+        });
+
         // ── SystemConfig ─────────────────────────────────────────────────────
         modelBuilder.Entity<SystemConfig>(e =>
         {
@@ -144,6 +164,42 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<MassCommMessage>(e =>
         {
             e.HasKey(m => m.Id);
+        });
+
+        // ── Referral Import ──────────────────────────────────────────────────
+        modelBuilder.Entity<ReferralImportBatch>(e =>
+        {
+            e.ToTable("tblReferralImportBatch");
+            e.HasKey(b => b.Id);
+            e.Property(b => b.FileName).HasMaxLength(260).IsRequired();
+            e.Property(b => b.Status).HasMaxLength(40).IsRequired();
+            e.Property(b => b.Notes).HasMaxLength(1000);
+            e.HasOne(b => b.ImportedByUser)
+                .WithMany()
+                .HasForeignKey(b => b.ImportedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasMany(b => b.Rows)
+                .WithOne(r => r.Batch)
+                .HasForeignKey(r => r.BatchId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ReferralImportRow>(e =>
+        {
+            e.ToTable("tblReferralImportRow");
+            e.HasKey(r => r.Id);
+            e.Property(r => r.Status).HasMaxLength(40).IsRequired();
+            e.Property(r => r.NhiNumber).HasMaxLength(50);
+            e.Property(r => r.PatientName).HasMaxLength(200);
+            e.Property(r => r.SpecialistType).HasMaxLength(100);
+            e.Property(r => r.Urgency).HasMaxLength(40);
+            e.Property(r => r.ReferralStatus).HasMaxLength(40);
+            e.Property(r => r.LegacyCaseNo).HasMaxLength(50);
+            e.Property(r => r.CaseNo).HasMaxLength(50);
+            e.Property(r => r.ErrorColumn).HasMaxLength(100);
+            e.Property(r => r.ErrorMessage).HasMaxLength(1000);
+            e.Property(r => r.RawData).HasMaxLength(4000);
+            e.HasIndex(r => r.BatchId);
         });
 
         SeedData(modelBuilder);
@@ -222,6 +278,31 @@ public class AppDbContext : DbContext
             }
         }
         modelBuilder.Entity<RoleMenuAccess>().HasData(rmaList);
+
+        // Referral Import menu (Admin only by default) — fixed Guids so existing seeds stay stable
+        modelBuilder.Entity<RoleMenuAccess>().HasData(
+            new RoleMenuAccess
+            {
+                Id = Guid.Parse("99999999-9999-9999-9999-000000000016"),
+                Role = UserRole.Admin,
+                MenuItem = "Referral Import",
+                HasAccess = true
+            },
+            new RoleMenuAccess
+            {
+                Id = Guid.Parse("99999999-9999-9999-9999-000000000017"),
+                Role = UserRole.TriageNurse,
+                MenuItem = "Referral Import",
+                HasAccess = false
+            },
+            new RoleMenuAccess
+            {
+                Id = Guid.Parse("99999999-9999-9999-9999-000000000018"),
+                Role = UserRole.GP,
+                MenuItem = "Referral Import",
+                HasAccess = false
+            }
+        );
 
         // ── Seed Standalone Patients ──────────────────────────────────────────
         var p1Id = Guid.Parse("55555555-5555-5555-5555-555555555555");

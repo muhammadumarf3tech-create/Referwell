@@ -78,7 +78,7 @@ namespace ReferWell.Infrastructure.Migrations
                             FullName = "John Doe",
                             Gender = "Male",
                             IsActive = true,
-                            PasswordHash = "$2a$11$arWPA0e0Rr39IxILEk65neV.Nl1Mrpo9V7u4F6BkE.A/X2orLaEpS",
+                            PasswordHash = "$2a$11$FaqIjhGpeBhRttdpciDV.evK.8AdUHkmTDnqorFWPRynupHg30.6C",
                             PhoneNumber = "+64 21 111 2222",
                             Title = "Mr."
                         },
@@ -90,7 +90,7 @@ namespace ReferWell.Infrastructure.Migrations
                             FullName = "Sarah Jenkins",
                             Gender = "Female",
                             IsActive = true,
-                            PasswordHash = "$2a$11$eO2F/KcbP7Rj1VH.E8q8P.wrSV.5EFsJhP3aeu7WlXXg.7bsmnzZK",
+                            PasswordHash = "$2a$11$j6k17ycNvpAzipdPcHoHy.n6IGyy1wi765p78m5xSiRe40jCAIdU6",
                             PhoneNumber = "+64 22 222 3333",
                             Title = "Mrs."
                         },
@@ -102,7 +102,7 @@ namespace ReferWell.Infrastructure.Migrations
                             FullName = "James Wilson",
                             Gender = "Male",
                             IsActive = true,
-                            PasswordHash = "$2a$11$uBK1YEZH/Dp3XgGKSD5SwukkEMJMO5soXjm.0ms.f2eZeGMkT4hJC",
+                            PasswordHash = "$2a$11$OZJTg63KDXLJSIAVUGsRleYTDse/TmmBAQ7vK/fRF0ftDyaFKS8ZW",
                             PhoneNumber = "+64 27 333 4444",
                             Title = "Dr."
                         },
@@ -114,7 +114,7 @@ namespace ReferWell.Infrastructure.Migrations
                             FullName = "Amelia Hart",
                             Gender = "Female",
                             IsActive = true,
-                            PasswordHash = "$2a$11$QFsJKNAvB8isQ1suhdU8T.8z0fKVB4nA3Esj1G7hW6XPzFSYtTwpu",
+                            PasswordHash = "$2a$11$PgMX4BvRHGtGLoAvNgs1HOvs1op4moaSnonKkfmHI.8wpKKw6yXJq",
                             PhoneNumber = "+64 29 444 5555",
                             Title = "Dr."
                         });
@@ -340,7 +340,7 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("55555555-5555-5555-5555-555555555555"),
-                            CreatedAt = new DateTime(2026, 7, 12, 19, 56, 13, 533, DateTimeKind.Local).AddTicks(2460),
+                            CreatedAt = new DateTime(2026, 7, 12, 22, 50, 56, 402, DateTimeKind.Local).AddTicks(4670),
                             DateOfBirth = new DateTime(1955, 3, 10, 0, 0, 0, 0, DateTimeKind.Local),
                             Email = "alice.martin@example.com",
                             Gender = "Female",
@@ -351,7 +351,7 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("66666666-6666-6666-6666-666655555555"),
-                            CreatedAt = new DateTime(2026, 7, 12, 19, 56, 13, 533, DateTimeKind.Local).AddTicks(2487),
+                            CreatedAt = new DateTime(2026, 7, 12, 22, 50, 56, 402, DateTimeKind.Local).AddTicks(4706),
                             DateOfBirth = new DateTime(1970, 7, 22, 0, 0, 0, 0, DateTimeKind.Local),
                             Email = "bob.clarke@example.com",
                             Gender = "Male",
@@ -362,7 +362,7 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("77777777-7777-7777-7777-777755555555"),
-                            CreatedAt = new DateTime(2026, 7, 12, 19, 56, 13, 533, DateTimeKind.Local).AddTicks(2491),
+                            CreatedAt = new DateTime(2026, 7, 12, 22, 50, 56, 402, DateTimeKind.Local).AddTicks(4710),
                             DateOfBirth = new DateTime(1940, 11, 5, 0, 0, 0, 0, DateTimeKind.Local),
                             Email = "carol.ahmed@example.com",
                             Gender = "Female",
@@ -373,7 +373,7 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("88888888-8888-8888-8888-888855555555"),
-                            CreatedAt = new DateTime(2026, 7, 12, 19, 56, 13, 533, DateTimeKind.Local).AddTicks(2495),
+                            CreatedAt = new DateTime(2026, 7, 12, 22, 50, 56, 402, DateTimeKind.Local).AddTicks(4714),
                             DateOfBirth = new DateTime(1985, 2, 14, 0, 0, 0, 0, DateTimeKind.Local),
                             Email = "david.johnson@example.com",
                             Gender = "Male",
@@ -384,7 +384,7 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("99999999-9999-9999-9999-999955555555"),
-                            CreatedAt = new DateTime(2026, 7, 12, 19, 56, 13, 533, DateTimeKind.Local).AddTicks(2498),
+                            CreatedAt = new DateTime(2026, 7, 12, 22, 50, 56, 402, DateTimeKind.Local).AddTicks(4720),
                             DateOfBirth = new DateTime(1932, 8, 30, 0, 0, 0, 0, DateTimeKind.Local),
                             Email = "eva.rodriguez@example.com",
                             Gender = "Female",
@@ -395,7 +395,7 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-5555-5555-5555-555555555555"),
-                            CreatedAt = new DateTime(2026, 7, 12, 19, 56, 13, 533, DateTimeKind.Local).AddTicks(2503),
+                            CreatedAt = new DateTime(2026, 7, 12, 22, 50, 56, 402, DateTimeKind.Local).AddTicks(4728),
                             DateOfBirth = new DateTime(1960, 4, 18, 0, 0, 0, 0, DateTimeKind.Local),
                             Email = "frank.lee@example.com",
                             Gender = "Male",
@@ -406,7 +406,7 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("bbbbbbbb-5555-5555-5555-555555555555"),
-                            CreatedAt = new DateTime(2026, 7, 12, 19, 56, 13, 533, DateTimeKind.Local).AddTicks(2506),
+                            CreatedAt = new DateTime(2026, 7, 12, 22, 50, 56, 402, DateTimeKind.Local).AddTicks(4731),
                             DateOfBirth = new DateTime(1978, 12, 3, 0, 0, 0, 0, DateTimeKind.Local),
                             Email = "grace.kim@example.com",
                             Gender = "Female",
@@ -417,7 +417,7 @@ namespace ReferWell.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("cccccccc-5555-5555-5555-555555555555"),
-                            CreatedAt = new DateTime(2026, 7, 12, 19, 56, 13, 533, DateTimeKind.Local).AddTicks(2513),
+                            CreatedAt = new DateTime(2026, 7, 12, 22, 50, 56, 402, DateTimeKind.Local).AddTicks(4741),
                             DateOfBirth = new DateTime(1945, 6, 25, 0, 0, 0, 0, DateTimeKind.Local),
                             Email = "henry.smith@example.com",
                             Gender = "Male",
@@ -438,8 +438,8 @@ namespace ReferWell.Infrastructure.Migrations
 
                     b.Property<string>("CaseNo")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime?>("ClaimedAt")
                         .HasColumnType("datetime2");
@@ -452,6 +452,9 @@ namespace ReferWell.Infrastructure.Migrations
 
                     b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsMigrated")
+                        .HasColumnType("bit");
 
                     b.Property<Guid>("PatientId")
                         .HasColumnType("uniqueidentifier");
@@ -510,6 +513,9 @@ namespace ReferWell.Infrastructure.Migrations
 
                     b.HasIndex("AssignedToUserId");
 
+                    b.HasIndex("CaseNo")
+                        .IsUnique();
+
                     b.HasIndex("ClaimedByUserId");
 
                     b.HasIndex("CreatedByUserId");
@@ -521,11 +527,12 @@ namespace ReferWell.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("62c3cd59-f32d-4961-9c23-9b2d126f8aa3"),
+                            Id = new Guid("00d4a84e-bacd-4809-a9e7-f9e74382b239"),
                             AssignedToUserId = new Guid("33333333-3333-3333-3333-333333333333"),
                             CaseNo = "Ref-000001",
                             CreatedAt = new DateTime(2024, 5, 27, 0, 0, 0, 0, DateTimeKind.Local),
                             CreatedByUserId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            IsMigrated = false,
                             PatientId = new Guid("55555555-5555-5555-5555-555555555555"),
                             PriorityScore = 75.5,
                             Reason = "Chest pain",
@@ -540,11 +547,12 @@ namespace ReferWell.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("5f0c804b-a557-4a84-ba06-592ee2aea1d2"),
+                            Id = new Guid("69bc44ef-4f7b-43bf-9f40-76b45b6f4bc7"),
                             AssignedToUserId = new Guid("33333333-3333-3333-3333-333333333333"),
                             CaseNo = "Ref-000002",
                             CreatedAt = new DateTime(2024, 5, 22, 0, 0, 0, 0, DateTimeKind.Local),
                             CreatedByUserId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            IsMigrated = false,
                             PatientId = new Guid("66666666-6666-6666-6666-666655555555"),
                             PriorityScore = 30.199999999999999,
                             Reason = "Knee pain",
@@ -559,11 +567,12 @@ namespace ReferWell.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("a6012e7b-ee72-4523-89be-1b9f0992535f"),
+                            Id = new Guid("331af4bc-efb2-489d-88e6-382f7ee22669"),
                             AssignedToUserId = new Guid("44444444-4444-4444-4444-444444444444"),
                             CaseNo = "Ref-000003",
                             CreatedAt = new DateTime(2024, 5, 29, 0, 0, 0, 0, DateTimeKind.Local),
                             CreatedByUserId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            IsMigrated = false,
                             PatientId = new Guid("77777777-7777-7777-7777-777755555555"),
                             PriorityScore = 55.0,
                             Reason = "Recurring headaches",
@@ -578,11 +587,12 @@ namespace ReferWell.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("78064ad5-a6b0-44f7-a2c8-1955878ea687"),
+                            Id = new Guid("6409b75d-19aa-4551-8c20-0ab89938e697"),
                             AssignedToUserId = new Guid("44444444-4444-4444-4444-444444444444"),
                             CaseNo = "Ref-000004",
                             CreatedAt = new DateTime(2024, 5, 17, 0, 0, 0, 0, DateTimeKind.Local),
                             CreatedByUserId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            IsMigrated = false,
                             PatientId = new Guid("88888888-8888-8888-8888-888855555555"),
                             PriorityScore = 22.800000000000001,
                             Reason = "Skin rash",
@@ -597,11 +607,12 @@ namespace ReferWell.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("cec98b32-5119-4ffd-9ab4-de02d98f81ae"),
+                            Id = new Guid("7feb7d42-ec25-41f3-bc42-1d3473d95156"),
                             AssignedToUserId = new Guid("33333333-3333-3333-3333-333333333333"),
                             CaseNo = "Ref-000005",
                             CreatedAt = new DateTime(2024, 5, 31, 0, 0, 0, 0, DateTimeKind.Local),
                             CreatedByUserId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            IsMigrated = false,
                             PatientId = new Guid("99999999-9999-9999-9999-999955555555"),
                             PriorityScore = 98.5,
                             Reason = "Mass detection",
@@ -616,11 +627,12 @@ namespace ReferWell.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("eea83374-f069-4313-bbef-607a41558118"),
+                            Id = new Guid("02ceeb5e-d8f6-464f-8f88-046ecc59250d"),
                             AssignedToUserId = new Guid("44444444-4444-4444-4444-444444444444"),
                             CaseNo = "Ref-000006",
                             CreatedAt = new DateTime(2024, 5, 30, 0, 0, 0, 0, DateTimeKind.Local),
                             CreatedByUserId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            IsMigrated = false,
                             PatientId = new Guid("aaaaaaaa-5555-5555-5555-555555555555"),
                             PriorityScore = 48.299999999999997,
                             Reason = "Stomach issues",
@@ -635,11 +647,12 @@ namespace ReferWell.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("8da1adc8-e9cf-42ae-af04-0c0d698b9249"),
+                            Id = new Guid("ffd08b3d-b7db-469d-8cd9-54be52d5d192"),
                             AssignedToUserId = new Guid("33333333-3333-3333-3333-333333333333"),
                             CaseNo = "Ref-000007",
                             CreatedAt = new DateTime(2024, 5, 25, 0, 0, 0, 0, DateTimeKind.Local),
                             CreatedByUserId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            IsMigrated = false,
                             PatientId = new Guid("bbbbbbbb-5555-5555-5555-555555555555"),
                             PriorityScore = 66.099999999999994,
                             Reason = "Vision deterioration",
@@ -654,11 +667,12 @@ namespace ReferWell.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("58e145b3-e68a-4e3b-9ad4-80b3c2eb6d32"),
+                            Id = new Guid("0f76eb06-80a7-46b4-837d-4df255fa224f"),
                             AssignedToUserId = new Guid("44444444-4444-4444-4444-444444444444"),
                             CaseNo = "Ref-000008",
                             CreatedAt = new DateTime(2024, 5, 12, 0, 0, 0, 0, DateTimeKind.Local),
                             CreatedByUserId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            IsMigrated = false,
                             PatientId = new Guid("cccccccc-5555-5555-5555-555555555555"),
                             PriorityScore = 41.700000000000003,
                             Reason = "Chronic cough",
@@ -702,6 +716,127 @@ namespace ReferWell.Infrastructure.Migrations
                     b.HasIndex("ReferralId");
 
                     b.ToTable("tblReferralAttachment", (string)null);
+                });
+
+            modelBuilder.Entity("ReferWell.Domain.Entities.ReferralImportBatch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CreatedPatients")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FailedRows")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<Guid>("ImportedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<int>("SucceededRows")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalRows")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ImportedByUserId");
+
+                    b.ToTable("tblReferralImportBatch", (string)null);
+                });
+
+            modelBuilder.Entity("ReferWell.Domain.Entities.ReferralImportRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CaseNo")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ErrorColumn")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("LegacyCaseNo")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("NhiNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("PatientCreated")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("PatientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PatientName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("RawData")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<Guid?>("ReferralId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ReferralStatus")
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<int>("RowNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SpecialistType")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("Urgency")
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BatchId");
+
+                    b.ToTable("tblReferralImportRow", (string)null);
                 });
 
             modelBuilder.Entity("ReferWell.Domain.Entities.RoleMenuAccess", b =>
@@ -829,7 +964,66 @@ namespace ReferWell.Infrastructure.Migrations
                             HasAccess = false,
                             MenuItem = "Menu Access",
                             Role = 3
+                        },
+                        new
+                        {
+                            Id = new Guid("99999999-9999-9999-9999-000000000016"),
+                            HasAccess = true,
+                            MenuItem = "Referral Import",
+                            Role = 1
+                        },
+                        new
+                        {
+                            Id = new Guid("99999999-9999-9999-9999-000000000017"),
+                            HasAccess = false,
+                            MenuItem = "Referral Import",
+                            Role = 2
+                        },
+                        new
+                        {
+                            Id = new Guid("99999999-9999-9999-9999-000000000018"),
+                            HasAccess = false,
+                            MenuItem = "Referral Import",
+                            Role = 3
                         });
+                });
+
+            modelBuilder.Entity("ReferWell.Domain.Entities.SecurityAuditEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ActorEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorUserId");
+
+                    b.HasIndex("Timestamp");
+
+                    b.ToTable("tblSecurityAuditEvent", (string)null);
                 });
 
             modelBuilder.Entity("ReferWell.Domain.Entities.SystemConfig", b =>
@@ -984,6 +1178,38 @@ namespace ReferWell.Infrastructure.Migrations
                     b.Navigation("Referral");
                 });
 
+            modelBuilder.Entity("ReferWell.Domain.Entities.ReferralImportBatch", b =>
+                {
+                    b.HasOne("ReferWell.Domain.Entities.ApplicationUser", "ImportedByUser")
+                        .WithMany()
+                        .HasForeignKey("ImportedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ImportedByUser");
+                });
+
+            modelBuilder.Entity("ReferWell.Domain.Entities.ReferralImportRow", b =>
+                {
+                    b.HasOne("ReferWell.Domain.Entities.ReferralImportBatch", "Batch")
+                        .WithMany("Rows")
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("ReferWell.Domain.Entities.SecurityAuditEvent", b =>
+                {
+                    b.HasOne("ReferWell.Domain.Entities.ApplicationUser", "ActorUser")
+                        .WithMany()
+                        .HasForeignKey("ActorUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ActorUser");
+                });
+
             modelBuilder.Entity("ReferWell.Domain.Entities.ApplicationUser", b =>
                 {
                     b.Navigation("AuditLogs");
@@ -1008,6 +1234,11 @@ namespace ReferWell.Infrastructure.Migrations
                     b.Navigation("Attachments");
 
                     b.Navigation("AuditLogs");
+                });
+
+            modelBuilder.Entity("ReferWell.Domain.Entities.ReferralImportBatch", b =>
+                {
+                    b.Navigation("Rows");
                 });
 #pragma warning restore 612, 618
         }

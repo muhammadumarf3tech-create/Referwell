@@ -5,6 +5,8 @@ using ReferWell.Api.Authorization;
 using ReferWell.Domain.Entities;
 using ReferWell.Domain.Enums;
 using ReferWell.Infrastructure.Data;
+using ReferWell.Infrastructure.Services;
+using System.Security.Claims;
 
 namespace ReferWell.Api.Controllers;
 
@@ -14,8 +16,17 @@ namespace ReferWell.Api.Controllers;
 public class MenuAccessController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly SecurityAuditService _audit;
 
-    public MenuAccessController(AppDbContext db) => _db = db;
+    public MenuAccessController(AppDbContext db, SecurityAuditService audit)
+    {
+        _db = db;
+        _audit = audit;
+    }
+
+    private Guid CurrentUserId =>
+        Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)!);
 
     [HttpGet]
     public async Task<IActionResult> GetMenuAccess()
@@ -49,6 +60,7 @@ public class MenuAccessController : ControllerBase
         }
 
         await _db.SaveChangesAsync();
+        await _audit.LogAsync("MenuAccessUpdated", CurrentUserId, details: $"Updated {req.Count} menu access rows");
         return Ok(new { message = "Menu access configuration updated." });
     }
 }

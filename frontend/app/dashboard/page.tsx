@@ -10,6 +10,20 @@ import {
 } from 'lucide-react';
 import SlaTimer from '@/components/SlaTimer';
 
+/** Compact page list: e.g. 1 … 4 5 6 … 670 instead of every page. */
+function getPaginationItems(current: number, total: number): (number | 'ellipsis')[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  if (current <= 4) {
+    return [1, 2, 3, 4, 5, 'ellipsis', total];
+  }
+  if (current >= total - 3) {
+    return [1, 'ellipsis', total - 4, total - 3, total - 2, total - 1, total];
+  }
+  return [1, 'ellipsis', current - 1, current, current + 1, 'ellipsis', total];
+}
+
 interface MultiSelectProps {
   label: string;
   options: { value: string; label: string }[];
@@ -158,6 +172,7 @@ interface Referral {
   attachments?: Attachment[];
   claimedAt?: string | null;
   caseNo: string;
+  isMigrated?: boolean;
   auditLogs?: AuditLog[];
 }
 
@@ -252,6 +267,7 @@ export default function DashboardPage() {
   const [filterFromDate, setFilterFromDate] = useState('');
   const [filterToDate, setFilterToDate] = useState('');
   const [filterSlaBreach, setFilterSlaBreach] = useState(false);
+  const [filterMigrated, setFilterMigrated] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -302,6 +318,30 @@ export default function DashboardPage() {
     }
   };
 
+  const downloadPdf = async (url: string, fileName: string) => {
+    if (!user) return;
+    try {
+      const res = await fetch(`${url}?download=true`, {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      if (!res.ok) {
+        showToast('error', 'Failed to download document');
+        return;
+      }
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      showToast('error', 'Network error while downloading');
+    }
+  };
+
   const fetchReferrals = useCallback(async (pageOverride?: number) => {
     if (!user) return;
     setLoading(true);
@@ -316,6 +356,7 @@ export default function DashboardPage() {
       if (filterFromDate) params.set('fromDate', filterFromDate);
       if (filterToDate) params.set('toDate', filterToDate);
       if (filterSlaBreach) params.set('slaBreach', 'true');
+      if (filterMigrated) params.set('isMigrated', 'true');
       if (sortBy) params.set('sortBy', sortBy);
       params.set('page', pageToFetch.toString());
       params.set('pageSize', '15');
@@ -340,7 +381,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, filterStatus, filterUrgency, filterAssignee, patientSearch, caseNoSearch, currentPage, sortBy, filterFromDate, filterToDate, filterSlaBreach]);
+  }, [user, filterStatus, filterUrgency, filterAssignee, patientSearch, caseNoSearch, currentPage, sortBy, filterFromDate, filterToDate, filterSlaBreach, filterMigrated]);
 
   const fetchUsers = useCallback(async () => {
     if (!user) return;
@@ -365,12 +406,12 @@ export default function DashboardPage() {
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [user, filterStatus, filterUrgency, filterAssignee, patientSearch, caseNoSearch, sortBy, filterFromDate, filterToDate, filterSlaBreach, currentPage]);
+  }, [user, filterStatus, filterUrgency, filterAssignee, patientSearch, caseNoSearch, sortBy, filterFromDate, filterToDate, filterSlaBreach, filterMigrated, currentPage]);
 
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterStatus, filterUrgency, filterAssignee, patientSearch, caseNoSearch, sortBy, filterFromDate, filterToDate, filterSlaBreach]);
+  }, [filterStatus, filterUrgency, filterAssignee, patientSearch, caseNoSearch, sortBy, filterFromDate, filterToDate, filterSlaBreach, filterMigrated]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -851,6 +892,18 @@ export default function DashboardPage() {
               SLA Breach
             </button>
 
+            <button
+              type="button"
+              onClick={() => setFilterMigrated(v => !v)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border shadow-sm transition-all ${
+                filterMigrated
+                  ? 'bg-indigo-50 border-indigo-300 text-indigo-700 ring-2 ring-indigo-100'
+                  : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-200'
+              }`}
+            >
+              Migrated
+            </button>
+
             {/* Sort Dropdown */}
             <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-600 focus-within:ring-2 focus-within:ring-blue-500/20 font-bold shadow-sm select-none">
               <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Sort:</span>
@@ -864,7 +917,7 @@ export default function DashboardPage() {
               </select>
             </div>
 
-            {(filterStatus.length > 0 || filterUrgency.length > 0 || filterAssignee.length > 0 || patientSearch || caseNoSearch || sortBy !== 'priority' || filterFromDate || filterToDate || filterSlaBreach) && (
+            {(filterStatus.length > 0 || filterUrgency.length > 0 || filterAssignee.length > 0 || patientSearch || caseNoSearch || sortBy !== 'priority' || filterFromDate || filterToDate || filterSlaBreach || filterMigrated) && (
               <button
                 onClick={() => {
                   setFilterStatus([]);
@@ -876,6 +929,7 @@ export default function DashboardPage() {
                   setFilterFromDate('');
                   setFilterToDate('');
                   setFilterSlaBreach(false);
+                  setFilterMigrated(false);
                 }}
                 className="text-xs text-red-600 hover:text-red-800 font-bold flex items-center gap-1 ml-auto bg-red-50 hover:bg-red-100/60 px-3 py-1.5 rounded-lg border border-red-100 transition-all"
               >
@@ -921,6 +975,11 @@ export default function DashboardPage() {
                         <span className="font-extrabold text-blue-600 text-[10px] font-mono border border-blue-100 bg-blue-50/50 px-2 py-0.5 rounded-lg shrink-0">
                           {r.caseNo}
                         </span>
+                        {(r.isMigrated ?? (r as any).IsMigrated) && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold">
+                            Migrated
+                          </span>
+                        )}
                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] border font-bold ${urgencyColors[r.urgency]}`}>
                           {r.urgency === 'SemiUrgent' ? 'Semi-Urgent' : r.urgency}
                         </span>
@@ -1026,15 +1085,14 @@ export default function DashboardPage() {
                                   >
                                     <Eye className="w-3.5 h-3.5" />
                                   </button>
-                                  <a
-                                    href={`${url}?download=true`}
-                                    target="_blank"
-                                    rel="noreferrer"
+                                  <button
+                                    type="button"
+                                    onClick={() => downloadPdf(url, att.fileName)}
                                     className="p-1 text-slate-400 hover:text-slate-600 rounded hover:bg-slate-50 transition-colors"
                                     title="Download PDF"
                                   >
                                     <Download className="w-3.5 h-3.5" />
-                                  </a>
+                                  </button>
                                 </div>
                               );
                             })}
@@ -1115,7 +1173,7 @@ export default function DashboardPage() {
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-4 rounded-xl shadow-sm mt-4">
+              <div className="flex items-center justify-between gap-4 border-t border-slate-200 bg-white px-6 py-4 rounded-xl shadow-sm mt-4">
                 <div className="flex flex-1 justify-between sm:hidden">
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
@@ -1132,54 +1190,61 @@ export default function DashboardPage() {
                     Next
                   </button>
                 </div>
-                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500">
-                      Showing <span className="font-extrabold text-slate-800">{(currentPage - 1) * 15 + 1}</span> to{' '}
-                      <span className="font-extrabold text-slate-800">
-                        {Math.min(currentPage * 15, totalCount)}
-                      </span>{' '}
-                      of <span className="font-extrabold text-slate-800">{totalCount}</span> results
-                    </p>
-                  </div>
-                  <div>
-                    <nav className="isolate inline-flex -space-x-px rounded-xl shadow-sm border border-slate-200" aria-label="Pagination">
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="relative inline-flex items-center rounded-l-xl px-3 py-2 text-slate-400 hover:bg-slate-50 disabled:opacity-50"
-                      >
-                        <span className="sr-only">Previous</span>
-                        <ChevronDown className="h-4 w-4 rotate-90" />
-                      </button>
-                      
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => {
-                        const isCurrent = p === currentPage;
-                        return (
-                          <button
-                            key={p}
-                            onClick={() => setCurrentPage(p)}
-                            className={`relative inline-flex items-center px-4 py-2 text-xs font-bold focus:z-20 transition-all ${
-                              isCurrent
-                                ? 'z-10 bg-blue-600 text-white'
-                                : 'text-slate-900 border-l border-slate-200 hover:bg-slate-50'
-                            }`}
-                          >
-                            {p}
-                          </button>
-                        );
-                      })}
+                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between gap-4 min-w-0">
+                  <p className="text-xs font-semibold text-slate-500 whitespace-nowrap shrink-0">
+                    Showing <span className="font-extrabold text-slate-800">{(currentPage - 1) * 15 + 1}</span> to{' '}
+                    <span className="font-extrabold text-slate-800">
+                      {Math.min(currentPage * 15, totalCount)}
+                    </span>{' '}
+                    of <span className="font-extrabold text-slate-800">{totalCount.toLocaleString()}</span> results
+                  </p>
+                  <nav className="isolate inline-flex -space-x-px rounded-xl shadow-sm border border-slate-200 shrink-0" aria-label="Pagination">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="relative inline-flex items-center rounded-l-xl px-3 py-2 text-slate-400 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      <span className="sr-only">Previous</span>
+                      <ChevronDown className="h-4 w-4 rotate-90" />
+                    </button>
 
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                        className="relative inline-flex items-center rounded-r-xl px-3 py-2 text-slate-400 border-l border-slate-200 hover:bg-slate-50 disabled:opacity-50"
-                      >
-                        <span className="sr-only">Next</span>
-                        <ChevronDown className="h-4 w-4 -rotate-90" />
-                      </button>
-                    </nav>
-                  </div>
+                    {getPaginationItems(currentPage, totalPages).map((item, idx) => {
+                      if (item === 'ellipsis') {
+                        return (
+                          <span
+                            key={`ellipsis-${idx}`}
+                            className="relative inline-flex items-center px-3 py-2 text-xs font-bold text-slate-400 border-l border-slate-200 select-none"
+                          >
+                            …
+                          </span>
+                        );
+                      }
+                      const isCurrent = item === currentPage;
+                      return (
+                        <button
+                          key={item}
+                          onClick={() => setCurrentPage(item)}
+                          aria-current={isCurrent ? 'page' : undefined}
+                          className={`relative inline-flex items-center min-w-[2.25rem] justify-center px-3 py-2 text-xs font-bold focus:z-20 transition-all ${
+                            isCurrent
+                              ? 'z-10 bg-blue-600 text-white'
+                              : 'text-slate-900 border-l border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          {item}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="relative inline-flex items-center rounded-r-xl px-3 py-2 text-slate-400 border-l border-slate-200 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      <span className="sr-only">Next</span>
+                      <ChevronDown className="h-4 w-4 -rotate-90" />
+                    </button>
+                  </nav>
                 </div>
               </div>
             )}
@@ -1316,15 +1381,14 @@ export default function DashboardPage() {
                                 >
                                   <Eye className="w-4 h-4" />
                                 </button>
-                                <a
-                                  href={`${url}?download=true`}
-                                  target="_blank"
-                                  rel="noreferrer"
+                                <button
+                                  type="button"
+                                  onClick={() => downloadPdf(url, att.fileName)}
                                   className="p-1 text-slate-400 hover:text-slate-600 rounded hover:bg-slate-100 transition-colors flex items-center"
                                   title="Download PDF"
                                 >
                                   <Download className="w-4 h-4" />
-                                </a>
+                                </button>
                               </div>
                             </div>
                           );
@@ -1346,6 +1410,12 @@ export default function DashboardPage() {
                           const nonPdf = list.filter(f => f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf'));
                           if (nonPdf.length > 0) {
                             showToast('error', 'Only PDF files (.pdf) are allowed as attachments.');
+                            e.target.value = '';
+                            return;
+                          }
+                          const tooLarge = list.filter(f => f.size > 20 * 1024 * 1024);
+                          if (tooLarge.length > 0) {
+                            showToast('error', 'PDF attachments must be 20 MB or smaller.');
                             e.target.value = '';
                             return;
                           }

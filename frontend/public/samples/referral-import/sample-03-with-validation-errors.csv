@@ -1,0 +1,21 @@
+NhiNumber,PatientName,DateOfBirth,PatientEmail,PatientPhone,Gender,SpecialistType,Reason,Urgency,Status,ReceivedAt,AssignedToEmail,ReferringGpEmail,LegacyCaseNo
+IMP3001,Valid Patient One,1970-01-01,vp1@example.com,+64 21 900 3001,Female,Cardiology,Valid referral row,Routine,Received,2025-10-01T09:00:00,nurse@referwell.com,gp1@referwell.com,LEG-E-3001
+,Missing NHI Patient,1970-01-02,bad1@example.com,+64 21 900 3002,Male,Cardiology,Should fail missing NHI,Routine,Received,2025-10-01T09:00:00,nurse@referwell.com,gp1@referwell.com,LEG-E-3002
+IMP3003,Bad Urgency Patient,1970-01-03,bad2@example.com,+64 21 900 3003,Female,Cardiology,Should fail urgency,High,Received,2025-10-01T09:00:00,nurse@referwell.com,gp1@referwell.com,LEG-E-3003
+IMP3004,Valid Patient Two,1971-02-02,vp2@example.com,+64 21 900 3004,Male,Neurology,Valid neurology referral,SemiUrgent,Triaged,2025-10-02T10:00:00,nurse@referwell.com,gp2@referwell.com,LEG-E-3004
+IMP3005,Bad Status Patient,1971-02-03,bad3@example.com,+64 21 900 3005,Female,Neurology,Should fail status,Routine,Pending,2025-10-02T10:00:00,nurse@referwell.com,gp2@referwell.com,LEG-E-3005
+IMP3006,Unknown Assignee,1971-02-04,bad4@example.com,+64 21 900 3006,Male,Orthopedics,Should fail assignee,Routine,Received,2025-10-03T11:00:00,nobody@referwell.com,gp1@referwell.com,LEG-E-3006
+IMP3007,Valid Patient Three,1972-03-03,vp3@example.com,+64 21 900 3007,Female,Dermatology,Valid derm referral,Urgent,Accepted,2025-10-04T12:00:00,nurse@referwell.com,gp1@referwell.com,LEG-E-3007
+IMP3008,,1980-01-01,bad5@example.com,+64 21 900 3008,Male,Dermatology,Should fail missing name,Routine,Received,2025-10-04T12:00:00,nurse@referwell.com,gp1@referwell.com,LEG-E-3008
+IMP3009,Missing DOB Patient,,bad6@example.com,+64 21 900 3009,Female,Oncology,Should fail missing DOB,Urgent,Received,2025-10-05T13:00:00,nurse@referwell.com,gp2@referwell.com,LEG-E-3009
+IMP3010,Valid Patient Four,1973-04-04,vp4@example.com,+64 21 900 3010,Male,Oncology,Valid oncology referral,Urgent,Received,2025-10-05T13:00:00,nurse@referwell.com,gp2@referwell.com,LEG-E-3010
+IMP3011,Bad GP Email,1973-04-05,bad7@example.com,+64 21 900 3011,Female,Pulmonology,Should fail referring GP,Routine,Received,2025-10-06T14:00:00,nurse@referwell.com,unknown.gp@example.com,LEG-E-3011
+IMP3012,Empty Reason,1973-04-06,bad8@example.com,+64 21 900 3012,Male,Pulmonology,,Routine,Received,2025-10-06T14:00:00,nurse@referwell.com,gp1@referwell.com,LEG-E-3012
+IMP3013,Valid Patient Five,1974-05-05,vp5@example.com,+64 21 900 3013,Female,Ophthalmology,Valid eye referral,SemiUrgent,Booked,2025-10-07T15:00:00,nurse@referwell.com,gp2@referwell.com,LEG-E-3013
+IMP3014,Future DOB,2099-01-01,bad9@example.com,+64 21 900 3014,Male,Ophthalmology,Should fail future DOB,Routine,Received,2025-10-07T15:00:00,nurse@referwell.com,gp2@referwell.com,LEG-E-3014
+IMP3015,Bad ReceivedAt,1974-05-06,bad10@example.com,+64 21 900 3015,Female,Gastroenterology,Should fail received date,Routine,Received,not-a-date,nurse@referwell.com,gp1@referwell.com,LEG-E-3015
+IMP3016,Valid Patient Six,1975-06-06,vp6@example.com,+64 21 900 3016,Male,Gastroenterology,Valid gastro referral,Routine,Completed,2025-08-01T09:00:00,nurse@referwell.com,gp1@referwell.com,LEG-E-3016
+IMP3017,Missing Specialty,1975-06-07,bad11@example.com,+64 21 900 3017,Female,,Should fail specialty,Routine,Received,2025-10-08T16:00:00,nurse@referwell.com,gp2@referwell.com,LEG-E-3017
+IMP3018,Valid Patient Seven,1976-07-07,vp7@example.com,+64 21 900 3018,Male,Cardiology,Second valid cardiology,SemiUrgent,Triaged,2025-10-09T09:30:00,nurse@referwell.com,gp1@referwell.com,LEG-E-3018
+IMP3019,Duplicate Legacy A,1976-07-08,dup1@example.com,+64 21 900 3019,Female,Cardiology,First legacy case,Routine,Received,2025-10-09T09:30:00,nurse@referwell.com,gp1@referwell.com,LEG-E-DUP
+IMP3020,Duplicate Legacy B,1976-07-09,dup2@example.com,+64 21 900 3020,Male,Cardiology,Should fail duplicate legacy,Routine,Received,2025-10-09T09:30:00,nurse@referwell.com,gp1@referwell.com,LEG-E-DUP

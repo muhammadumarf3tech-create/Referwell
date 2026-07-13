@@ -1,0 +1,21 @@
+NhiNumber,PatientName,DateOfBirth,PatientEmail,PatientPhone,Gender,SpecialistType,Reason,Urgency,Status,ReceivedAt,AssignedToEmail,ReferringGpEmail,LegacyCaseNo
+IMP2001,Ruby Clarke,1970-02-14,ruby.clarke@example.com,+64 22 800 2001,Female,Orthopedics,Persistent knee pain after injury,Routine,Received,2025-10-01T09:00:00,nurse@referwell.com,gp1@referwell.com,LEG-M-2001
+IMP2002,Oscar Diaz,1956-05-30,oscar.diaz@example.com,+64 22 800 2002,Male,Neurology,Recurrent migraines with aura,SemiUrgent,Triaged,2025-10-12T10:30:00,nurse@referwell.com,gp2@referwell.com,LEG-M-2002
+IMP2003,Zoe Mitchell,1981-11-09,zoe.mitchell@example.com,+64 22 800 2003,Female,Dermatology,Suspicious pigmented lesion,Urgent,Accepted,2025-11-01T08:15:00,nurse@referwell.com,gp1@referwell.com,LEG-M-2003
+IMP2004,Leo Carter,1944-08-22,leo.carter@example.com,+64 22 800 2004,Male,Ophthalmology,Sudden visual field loss,Urgent,Received,2025-11-07T07:40:00,nurse@referwell.com,gp2@referwell.com,LEG-M-2004
+IMP2005,Lily Evans,1969-01-18,lily.evans@example.com,+64 22 800 2005,Female,Gastroenterology,Iron deficiency anaemia workup,SemiUrgent,Booked,2025-09-20T14:00:00,nurse@referwell.com,gp1@referwell.com,LEG-M-2005
+IMP2006,Finn Hughes,1977-04-26,finn.hughes@example.com,+64 22 800 2006,Male,Pulmonology,Chronic cough lasting 3 months,Routine,Received,2025-10-22T11:10:00,nurse@referwell.com,gp2@referwell.com,LEG-M-2006
+IMP2007,Chloe Brooks,1959-12-05,chloe.brooks@example.com,+64 22 800 2007,Female,Oncology,Breast lump for urgent assessment,Urgent,Triaged,2025-11-04T09:25:00,nurse@referwell.com,gp1@referwell.com,LEG-M-2007
+IMP2008,Archie Price,1986-07-13,archie.price@example.com,+64 22 800 2008,Male,Orthopedics,Shoulder dislocation recurrent,SemiUrgent,Accepted,2025-10-16T15:30:00,nurse@referwell.com,gp2@referwell.com,LEG-M-2008
+IMP2009,Emily Foster,1972-03-28,emily.foster@example.com,+64 22 800 2009,Female,Neurology,New onset seizure,Urgent,Received,2025-11-06T12:00:00,nurse@referwell.com,gp1@referwell.com,LEG-M-2009
+IMP2010,George Bailey,1950-09-10,george.bailey@example.com,+64 22 800 2010,Male,Dermatology,Widespread eczematous rash,Routine,Completed,2025-08-05T10:00:00,nurse@referwell.com,gp2@referwell.com,LEG-M-2010
+IMP2011,Poppy Russell,1992-06-21,poppy.russell@example.com,+64 22 800 2011,Female,Ophthalmology,Diabetic retinopathy screening,Routine,Booked,2025-09-28T08:50:00,nurse@referwell.com,gp1@referwell.com,LEG-M-2011
+IMP2012,Harry Griffin,1964-10-03,harry.griffin@example.com,+64 22 800 2012,Male,Gastroenterology,Rectal bleeding investigation,Urgent,Accepted,2025-10-29T13:20:00,nurse@referwell.com,gp2@referwell.com,LEG-M-2012
+IMP2013,Ivy Hamilton,1947-02-27,ivy.hamilton@example.com,+64 22 800 2013,Female,Pulmonology,Suspected COPD exacerbation,SemiUrgent,Triaged,2025-10-19T16:15:00,nurse@referwell.com,gp1@referwell.com,LEG-M-2013
+IMP2014,Jacob Murray,1983-05-15,jacob.murray@example.com,+64 22 800 2014,Male,Oncology,Lymphadenopathy for review,SemiUrgent,Received,2025-11-02T09:05:00,nurse@referwell.com,gp2@referwell.com,LEG-M-2014
+IMP2015,Sienna Cole,1974-08-08,sienna.cole@example.com,+64 22 800 2015,Female,Orthopedics,Hip osteoarthritis limiting mobility,Routine,Declined,2025-09-12T11:45:00,nurse@referwell.com,gp1@referwell.com,LEG-M-2015
+IMP2016,Thomas Reed,1953-11-19,thomas.reed@example.com,+64 22 800 2016,Male,Neurology,Parkinsonism features,SemiUrgent,Accepted,2025-10-07T14:40:00,nurse@referwell.com,gp2@referwell.com,LEG-M-2016
+IMP2017,Willow Hayes,1989-01-31,willow.hayes@example.com,+64 22 800 2017,Female,Dermatology,Psoriasis not responding to therapy,Routine,Received,2025-10-27T10:20:00,nurse@referwell.com,gp1@referwell.com,LEG-M-2017
+IMP2018,Daniel Fox,1961-04-12,daniel.fox@example.com,+64 22 800 2018,Male,Ophthalmology,Cataract affecting driving,Routine,Booked,2025-09-05T09:30:00,nurse@referwell.com,gp2@referwell.com,LEG-M-2018
+IMP2019,Penelope Shaw,1978-07-24,penelope.shaw@example.com,+64 22 800 2019,Female,Gastroenterology,Abdominal pain and weight loss,Urgent,Triaged,2025-11-03T08:10:00,nurse@referwell.com,gp1@referwell.com,LEG-M-2019
+IMP2020,Samuel Barnes,1945-12-16,samuel.barnes@example.com,+64 22 800 2020,Male,Pulmonology,Hemoptysis investigation,Urgent,Received,2025-11-08T15:55:00,nurse@referwell.com,gp2@referwell.com,LEG-M-2020

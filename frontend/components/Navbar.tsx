@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { 
   LayoutDashboard, Settings, MessageSquare, Users, 
-  LogOut, ChevronDown, Activity, Bell, Key
+  LogOut, ChevronDown, Activity, Bell, Key, Upload
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { fetchMenuAccess, hasMenuAccess, type MenuAccessDto } from '@/lib/menuAccess';
@@ -35,6 +35,11 @@ const navItems = [
     label: 'Menu Access',
     href: '/menu-access',
     icon: Key,
+  },
+  {
+    label: 'Referral Import',
+    href: '/referral-import',
+    icon: Upload,
   },
 ];
 

@@ -38,16 +38,7 @@ public class ReferralsController : ControllerBase
     [HttpGet("next-case-no")]
     public async Task<IActionResult> GetNextCaseNo()
     {
-        var lastReferral = await _db.Referrals.OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
-        int nextIndex = 1;
-        if (lastReferral != null && !string.IsNullOrEmpty(lastReferral.CaseNo) && lastReferral.CaseNo.StartsWith("Ref-"))
-        {
-            if (int.TryParse(lastReferral.CaseNo.Substring(4), out var lastIdx))
-            {
-                nextIndex = lastIdx + 1;
-            }
-        }
-        var caseNo = $"Ref-{nextIndex:D6}";
+        var caseNo = await AllocateNextCaseNoAsync();
         return Ok(new { caseNo });
     }
 
@@ -63,9 +54,14 @@ public class ReferralsController : ControllerBase
         [FromQuery] DateTime? fromDate,
         [FromQuery] DateTime? toDate,
         [FromQuery] bool? slaBreach,
+        [FromQuery] bool? isMigrated,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 15)
     {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 15;
+        if (pageSize > 100) pageSize = 100;
+
         // Keep SlaBreach in sync for overdue Received referrals (time-to-first-triage SLA)
         await SyncSlaBreachesAsync();
 
@@ -151,6 +147,11 @@ public class ReferralsController : ControllerBase
             query = query.Where(r => r.SlaBreach && !r.SlaPaused);
         }
 
+        if (isMigrated.HasValue)
+        {
+            query = query.Where(r => r.IsMigrated == isMigrated.Value);
+        }
+
         // Order before paginating
         if (sortBy == "receivedDate")
         {
@@ -174,6 +175,7 @@ public class ReferralsController : ControllerBase
             {
                 r.Id,
                 r.CaseNo,
+                r.IsMigrated,
                 PatientId = r.PatientId,
                 PatientName = r.Patient != null ? r.Patient.Name : string.Empty,
                 PatientDateOfBirth = r.Patient != null ? r.Patient.DateOfBirth : DateTime.Now,
@@ -229,8 +231,8 @@ public class ReferralsController : ControllerBase
 
         if (referral == null) return NotFound();
 
-        // RBAC check for GPs
-        if (CurrentRoles.Contains("GP") && !CurrentRoles.Contains("Admin") && !CurrentRoles.Contains("TriageNurse") && referral.CreatedByUserId != CurrentUserId)
+        // RBAC: Admin/TriageNurse, assignee, creator, or claimer
+        if (!CanAccessReferral(referral))
             return Forbid();
 
         return Ok(referral);
@@ -245,17 +247,7 @@ public class ReferralsController : ControllerBase
         var patient = await _db.Patients.FindAsync(request.PatientId);
         if (patient == null) return BadRequest(new { message = "Patient not found." });
 
-        // Generate CaseNo
-        var lastReferral = await _db.Referrals.OrderByDescending(r => r.CreatedAt).FirstOrDefaultAsync();
-        int nextIndex = 1;
-        if (lastReferral != null && !string.IsNullOrEmpty(lastReferral.CaseNo) && lastReferral.CaseNo.StartsWith("Ref-"))
-        {
-            if (int.TryParse(lastReferral.CaseNo.Substring(4), out var lastIdx))
-            {
-                nextIndex = lastIdx + 1;
-            }
-        }
-        var caseNo = $"Ref-{nextIndex:D6}";
+        var caseNo = await AllocateNextCaseNoAsync();
 
         var receivedAt = DateTime.Now;
         var referral = new Referral
@@ -384,6 +376,12 @@ public class ReferralsController : ControllerBase
     {
         var referral = await _db.Referrals.FindAsync(id);
         if (referral == null) return NotFound();
+
+        // Only the claimer or Admin may release
+        if (!CurrentRoles.Contains("Admin")
+            && referral.ClaimedByUserId.HasValue
+            && referral.ClaimedByUserId != CurrentUserId)
+            return Forbid();
 
         referral.Release();
         _db.AuditLogs.Add(new AuditLog { ReferralId = id, PerformedByUserId = CurrentUserId, Action = "Released" });
@@ -530,14 +528,24 @@ public class ReferralsController : ControllerBase
     }
 
     // ── ATTACHMENTS ──────────────────────────────────────────────────────────
+    private const long MaxPdfBytes = 20L * 1024 * 1024; // 20 MB
+
     [HttpPost("{id}/attachments")]
+    [RequestSizeLimit(MaxPdfBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = MaxPdfBytes)]
     public async Task<IActionResult> UploadAttachment(Guid id, IFormFile file)
     {
         var referral = await _db.Referrals.FindAsync(id);
         if (referral == null) return NotFound();
 
+        if (!CanAccessReferral(referral))
+            return Forbid();
+
         if (file == null || file.Length == 0)
             return BadRequest(new { message = "No file uploaded." });
+
+        if (file.Length > MaxPdfBytes)
+            return BadRequest(new { message = "PDF attachments must be 20 MB or smaller." });
 
         // 1. Extension validation (case-insensitive)
         var ext = Path.GetExtension(file.FileName);
@@ -602,11 +610,15 @@ public class ReferralsController : ControllerBase
     }
 
     [HttpGet("attachments/{attachmentId}")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetAttachment(Guid attachmentId, [FromQuery] bool download = false)
     {
-        var attachment = await _db.ReferralAttachments.FindAsync(attachmentId);
-        if (attachment == null) return NotFound();
+        var attachment = await _db.ReferralAttachments
+            .Include(a => a.Referral)
+            .FirstOrDefaultAsync(a => a.Id == attachmentId);
+        if (attachment?.Referral == null) return NotFound();
+
+        if (!CanAccessReferral(attachment.Referral))
+            return Forbid();
 
         var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
         var filePath = Path.Combine(uploadsFolder, Path.GetFileName(attachment.FilePath));
@@ -614,19 +626,43 @@ public class ReferralsController : ControllerBase
         if (!System.IO.File.Exists(filePath))
             return NotFound();
 
+        _db.AuditLogs.Add(new AuditLog
+        {
+            ReferralId = attachment.ReferralId,
+            PerformedByUserId = CurrentUserId,
+            Action = download ? $"Downloaded {attachment.FileName}" : $"Viewed {attachment.FileName}"
+        });
+        await _db.SaveChangesAsync();
+
         var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
         if (download)
         {
             return File(fileBytes, attachment.ContentType, attachment.FileName);
         }
-        else
-        {
-            Response.Headers.Append("Content-Disposition", "inline");
-            return File(fileBytes, attachment.ContentType);
-        }
+
+        Response.Headers.Append("Content-Disposition", "inline");
+        return File(fileBytes, attachment.ContentType);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+    private async Task<string> AllocateNextCaseNoAsync()
+    {
+        var existing = await _db.Referrals.AsNoTracking()
+            .Select(r => r.CaseNo)
+            .ToListAsync();
+        return CaseNoGenerator.Next(existing);
+    }
+
+    private bool CanAccessReferral(Referral referral)
+    {
+        if (CurrentRoles.Contains("Admin") || CurrentRoles.Contains("TriageNurse"))
+            return true;
+
+        return referral.AssignedToUserId == CurrentUserId
+            || referral.CreatedByUserId == CurrentUserId
+            || referral.ClaimedByUserId == CurrentUserId;
+    }
+
     private async Task SyncSlaBreachesAsync()
     {
         var now = DateTime.Now;

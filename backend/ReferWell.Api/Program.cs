@@ -1,13 +1,19 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using ReferWell.Api.Validation;
 using ReferWell.Infrastructure.Data;
 using ReferWell.Infrastructure.Hubs;
 using ReferWell.Infrastructure.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+const long MaxPdfBytes = 20L * 1024 * 1024; // 20 MB
 
 // ── Database ──────────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -17,7 +23,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // ── JWT Authentication ────────────────────────────────────────────────────────
 var jwtConfig = builder.Configuration.GetSection("Jwt");
-var jwtKey = jwtConfig["Key"] ?? throw new InvalidOperationException("JWT Key not configured");
+var jwtKey = jwtConfig["Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.StartsWith("CHANGE_ME", StringComparison.OrdinalIgnoreCase))
+    throw new InvalidOperationException(
+        "JWT signing key is not configured. Set Jwt:Key via User Secrets, environment variable Jwt__Key, or appsettings.Development.json (never commit production secrets).");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -34,7 +43,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.Zero
         };
 
-        // Allow JWT in SignalR query string
+        // Allow JWT in SignalR query string (hub path only)
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = ctx =>
@@ -49,6 +58,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<SecurityAuditService>();
 
 // ── SignalR ───────────────────────────────────────────────────────────────────
 builder.Services.AddSignalR();
@@ -58,6 +69,13 @@ builder.Services.AddSingleton<MassCommChannel>();
 builder.Services.AddHostedService<MassCommBackgroundService>();
 builder.Services.AddHostedService<SlaBreachBackgroundService>();
 
+// ── Upload limits (PDF attachments ≤ 20 MB) ───────────────────────────────────
+builder.Services.Configure<FormOptions>(o =>
+{
+    o.MultipartBodyLengthLimit = MaxPdfBytes;
+});
+builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = MaxPdfBytes);
+
 // ── CORS ─────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(opts =>
     opts.AddPolicy("FrontendPolicy", policy =>
@@ -66,12 +84,15 @@ builder.Services.AddCors(opts =>
               .AllowAnyMethod()
               .AllowCredentials()));
 
-// ── Swagger ───────────────────────────────────────────────────────────────────
+// ── Controllers + FluentValidation ────────────────────────────────────────────
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
