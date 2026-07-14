@@ -24,7 +24,8 @@ This document maintains a complete history and audit trail of all AI assistant i
 | `53730f06-9e3e-497e-9845-40e18c5710bd` | 2026-07-09 | Referral & User Management | Implemented UI/UX enhancements for managing referrals, patient selector, and assignees. |
 | `fddacc44-36a2-42c6-9369-854f9879cabb` | 2026-07-10 | Port Update, Previews & Transitions | Set backend port, added logged-in login redirect, implemented PDF attachment preview on upload/edit, fixed status transition errors. |
 | `57b6f792-7a94-4c9c-b262-19c46fcdfcf6` | 2026-07-10 | Audit Logs, Role Saving Fix & UI Filters | Implemented audit log history timeline, fixed multi-role saving error, added search inside multi-select dropdown filters, and resolved auto-downloading preview issue. |
-| `18ab4383-eac4-4b04-b778-24c67ff08dbe` (Current) | 2026-07-12 | Mass Comm Refining, SLA & Menu Auth | Finalized referral grid filters, SLA pausing/resuming controls, and mass comm template validations. Integrated dynamic role-menu authorization and tests. |
+| `18ab4383-eac4-4b04-b778-24c67ff08dbe` | 2026-07-12 | Mass Comm Refining, SLA & Menu Auth | Finalized referral grid filters, SLA pausing/resuming controls, and mass comm template validations. Integrated dynamic role-menu authorization and tests. |
+| `89671fce-a745-47ed-8e38-dcdb3af4d9bb` (Current) | 2026-07-14 | Clean Architecture & Request Logging | Refactored backend into application/domain layer, added comprehensive safe request logging on both C# backend and Next.js frontend, ensured zero token/payload exposure, and increased test coverage to 39 passing tests. |
 
 ---
 
@@ -62,3 +63,18 @@ This document maintains a complete history and audit trail of all AI assistant i
 *   **Verification**:
     *   C# Unit tests: 19/19 tests passed successfully.
     *   Drafted official release notes in [RELEASE_NOTES.md](file:///d:/AIProjects/ReferWell/RELEASE_NOTES.md).
+
+### Current Session: `89671fce-a745-47ed-8e38-dcdb3af4d9bb`
+*   **Goal**:
+    *   Refactor backend controllers to delegate to the Application layer (Clean Architecture).
+    *   Implement safe, redacted request logging on both the backend and frontend.
+    *   Avoid logging sensitive tokens, passwords, bodies, or PHI.
+    *   Verify with backend tests and frontend builds.
+*   **Modifications**:
+    *   [AuthController.cs](file:///d:/AIProjects/ReferWell/backend/ReferWell.Api/Controllers/AuthController.cs) etc.: Delegated business logic to Application layer queries/commands.
+    *   [RequestLoggingMiddleware.cs](file:///d:/AIProjects/ReferWell/backend/ReferWell.Api/Middleware/RequestLoggingMiddleware.cs): Appended request metadata (redacting sensitive keys) to daily files under `backend/logs/`.
+    *   [route.ts (request-log API)](file:///d:/AIProjects/ReferWell/frontend/app/api/request-log/route.ts): Stored browser-originated API request logs into `frontend/logs/` safely.
+    *   [api.ts](file:///d:/AIProjects/ReferWell/frontend/lib/api.ts) & [requestLogger.ts](file:///d:/AIProjects/ReferWell/frontend/lib/requestLogger.ts): Wrapped all fetch requests inside an automatic logging pipeline.
+*   **Verification**:
+    *   Passed all 39 backend tests cleanly via `dotnet test`.
+    *   Successfully ran Next.js production build (`npm run build`).

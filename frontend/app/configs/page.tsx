@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Settings, Save, Loader2, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import { fetchMenuAccess, hasMenuAccess } from '@/lib/menuAccess';
+import { apiFetch } from '@/lib/api';
 
 interface Weight {
   key: string;
@@ -41,8 +42,8 @@ export default function ConfigsPage() {
         return;
       }
 
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/config/weights`, {
-        headers: { Authorization: `Bearer ${user.token}` }
+      apiFetch(`/api/config/weights`, {
+        token: user.token
       })
         .then(r => r.json())
         .then((data: Weight[]) => {
@@ -68,9 +69,9 @@ export default function ConfigsPage() {
     if (!user || !isValid) return;
     setSaving(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/config/weights`, {
+      const res = await apiFetch(`/api/config/weights`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${user.token}`, 'Content-Type': 'application/json' },
+        token: user.token, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           weightUrgency: weights.weight_urgency,
           weightWaittime: weights.weight_waittime,

@@ -8,6 +8,7 @@ import {
   Loader2, Shield, Stethoscope, UserCog, X, Save, AlertCircle, Eye, EyeOff, Search, ChevronDown
 } from 'lucide-react';
 import { fetchMenuAccess, hasMenuAccess } from '@/lib/menuAccess';
+import { apiFetch } from '@/lib/api';
 
 interface User {
   id: string;
@@ -83,8 +84,8 @@ export default function UsersPage() {
       params.set('pageSize', '15');
       if (searchQuery) params.set('search', searchQuery);
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users?${params}`, {
-        headers: { Authorization: `Bearer ${currentUser.token}` }
+      const res = await apiFetch(`/api/users?${params}`, {
+        token: currentUser.token
       });
       if (res.ok) {
         const data = await res.json();
@@ -211,8 +212,8 @@ export default function UsersPage() {
     setSaving(true);
     try {
       const url = editTarget
-        ? `${process.env.NEXT_PUBLIC_API_URL}/api/users/${editTarget.id}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/api/users`;
+        ? `/api/users/${editTarget.id}`
+        : `/api/users`;
       const method = editTarget ? 'PUT' : 'POST';
       
       const body = editTarget
@@ -236,9 +237,10 @@ export default function UsersPage() {
             phoneNumber: fullPhoneNumber
           };
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
-        headers: { Authorization: `Bearer ${currentUser.token}`, 'Content-Type': 'application/json' },
+        token: currentUser.token,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       let data: { message?: string } = {};
@@ -263,9 +265,9 @@ export default function UsersPage() {
 
   const deactivate = async (u: User) => {
     if (!currentUser) return;
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${u.id}`, {
+    const res = await apiFetch(`/api/users/${u.id}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${currentUser.token}` }
+      token: currentUser.token
     });
     if (res.ok) { 
       showToast('success', 'User deactivated'); 

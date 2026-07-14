@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using ReferWell.Application.Common.Interfaces;
 using ReferWell.Domain.Entities;
 using ReferWell.Domain.Enums;
 
 namespace ReferWell.Infrastructure.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext : DbContext, IApplicationDbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 

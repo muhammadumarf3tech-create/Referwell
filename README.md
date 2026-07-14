@@ -50,9 +50,9 @@ The system is built on **Clean Architecture (Onion Pattern)** to decouple busine
 backend/
 ├── ReferWell.slnx              # .NET 9-style solution file
 ├── ReferWell.Domain/           # Pure entities, value objects, state rules (No dependencies)
-├── ReferWell.Application/      # DTOs, validations, interfaces
-├── ReferWell.Infrastructure/   # AppDbContext (SQL Server), SignalR hubs, Background Service
-├── ReferWell.Api/              # Presentation Controllers, JWT configuration, Swagger
+├── ReferWell.Application/      # Use cases, DTOs, validators, and ports (interfaces)
+├── ReferWell.Infrastructure/   # EF Core, SignalR, file storage, JWT/BCrypt adapters, background workers
+├── ReferWell.Api/              # Thin controllers, auth middleware, Swagger, composition root
 └── ReferWell.Tests/            # xUnit tests for state machine, priorities, concurrency
 frontend/
 ├── app/                        # Next.js App Router Pages
@@ -70,9 +70,9 @@ frontend/
 
 ### ADR 1: Clean Architecture Pattern
 *   **Context**: The application requires highly testable business logic (targeting >= 70% domain coverage) with strict state machine and priority scoring rules.
-*   **Decision**: Adopt **Clean Architecture (Onion Architecture)** splitting the codebase into Domain, Application, Infrastructure, and Presentation layers.
-*   **Consequences**: The core domain (state machine, prioritization algorithms) has zero dependency on databases, ORMs, or web APIs. This makes unit testing incredibly simple and robust.
-*   **Alternatives Rejected**: *Classic N-Tier (3-Layered)*. Tends to breed fat services coupled directly to EF Core DbContext, making unit testing domain rules difficult without complex mock setups.
+*   **Decision**: Adopt **Clean Architecture (Onion Architecture)** splitting the codebase into Domain, Application, Infrastructure, and Presentation layers. Controllers are thin HTTP adapters; use cases live in Application services behind ports; Infrastructure provides adapters (EF Core, SignalR, JWT, file storage).
+*   **Consequences**: The core domain (state machine, prioritization algorithms) has zero dependency on databases, ORMs, or web APIs. Application orchestrates use cases without depending on ASP.NET. This makes unit testing domain rules simple and keeps infrastructure swappable.
+*   **Alternatives Rejected**: *Classic N-Tier (3-Layered)*. Tends to breed fat controllers coupled directly to EF Core DbContext, making unit testing difficult without complex mock setups.
 
 ### ADR 2: MS SQL Server with rowversion Concurrency Tokens
 *   **Context**: Multi-user queue safety is critical. Two clinical triage coordinators must not be able to claim or triage the same referral at the same time.

@@ -8,6 +8,7 @@ import {
   Loader2, Search, Upload, X,
 } from 'lucide-react';
 import { fetchMenuAccess, hasMenuAccess } from '@/lib/menuAccess';
+import { apiFetch } from '@/lib/api';
 
 type Batch = {
   id: string;
@@ -124,9 +125,6 @@ export default function ReferralImportPage() {
   const [rowTotalCount, setRowTotalCount] = useState(0);
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  const headers = () => ({ Authorization: `Bearer ${user?.token}` });
-
   const showToast = (type: 'success' | 'error', msg: string) => {
     setToast({ type, msg });
     window.setTimeout(() => setToast(null), 4500);
@@ -207,7 +205,7 @@ export default function ReferralImportPage() {
       if (fromDate) params.set('fromDate', fromDate);
       if (toDate) params.set('toDate', toDate);
 
-      const response = await fetch(`${api}/api/referralimport?${params}`, { headers: headers() });
+      const response = await apiFetch(`/api/referralimport?${params}`, { token: user?.token });
       if (!response.ok) return;
       const data = await response.json();
       const rawItems: any[] = data.items ?? data.Items ?? [];
@@ -229,7 +227,7 @@ export default function ReferralImportPage() {
       params.set('pageSize', String(ROW_PAGE_SIZE));
       if (status) params.set('status', status);
       if (term.trim()) params.set('search', term.trim());
-      const response = await fetch(`${api}/api/referralimport/${batch.id}/rows?${params}`, { headers: headers() });
+      const response = await apiFetch(`/api/referralimport/${batch.id}/rows?${params}`, { token: user?.token });
       if (!response.ok) return;
       const data = await response.json();
       const rawItems: any[] = data.items ?? data.Items ?? [];
@@ -268,9 +266,9 @@ export default function ReferralImportPage() {
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
-      const response = await fetch(`${api}/api/referralimport`, {
+      const response = await apiFetch(`/api/referralimport`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${user?.token}` },
+        token: user?.token,
         body: formData,
       });
       const data = await response.json().catch(() => ({}));
@@ -338,11 +336,11 @@ export default function ReferralImportPage() {
             </div>
           </div>
           <a
-            href={`${api}/api/referralimport/template`}
+            href="/api/referralimport/template"
             className="inline-flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50"
             onClick={async (e) => {
               e.preventDefault();
-              const res = await fetch(`${api}/api/referralimport/template`, { headers: headers() });
+              const res = await apiFetch(`/api/referralimport/template`, { token: user?.token });
               if (!res.ok) { showToast('error', 'Unable to download template.'); return; }
               const blob = await res.blob();
               const url = URL.createObjectURL(blob);

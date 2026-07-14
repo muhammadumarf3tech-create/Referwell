@@ -9,6 +9,7 @@ import {
   Loader2, Lock, Unlock, TrendingUp, X, Paperclip, Download, Pencil, Save, ChevronDown, ChevronUp, Activity, Eye, Pause, Play
 } from 'lucide-react';
 import SlaTimer from '@/components/SlaTimer';
+import { apiFetch } from '@/lib/api';
 
 /** Compact page list: e.g. 1 … 4 5 6 … 670 instead of every page. */
 function getPaginationItems(current: number, total: number): (number | 'ellipsis')[] {
@@ -302,8 +303,8 @@ export default function DashboardPage() {
   const previewPdf = async (url: string, fileName: string) => {
     if (!user) return;
     try {
-      const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${user.token}` }
+      const res = await apiFetch(url, {
+        token: user.token
       });
       if (res.ok) {
         const blob = await res.blob();
@@ -321,8 +322,8 @@ export default function DashboardPage() {
   const downloadPdf = async (url: string, fileName: string) => {
     if (!user) return;
     try {
-      const res = await fetch(`${url}?download=true`, {
-        headers: { Authorization: `Bearer ${user.token}` }
+      const res = await apiFetch(`${url}?download=true`, {
+        token: user.token
       });
       if (!res.ok) {
         showToast('error', 'Failed to download document');
@@ -361,9 +362,8 @@ export default function DashboardPage() {
       params.set('page', pageToFetch.toString());
       params.set('pageSize', '15');
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/referrals?${params}`,
-        { headers: { Authorization: `Bearer ${user.token}` } }
+      const res = await apiFetch(`/api/referrals?${params}`,
+        { token: user.token }
       );
       if (res.ok) {
         const data = await res.json();
@@ -386,8 +386,8 @@ export default function DashboardPage() {
   const fetchUsers = useCallback(async () => {
     if (!user) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
-        headers: { Authorization: `Bearer ${user.token}` }
+      const res = await apiFetch(`/api/users`, {
+        token: user.token
       });
       if (res.ok) {
         const data = await res.json();
@@ -457,9 +457,9 @@ export default function DashboardPage() {
   const claimReferral = async (r: Referral) => {
     if (!user) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/referrals/${r.id}/claim`, {
+      const res = await apiFetch(`/api/referrals/${r.id}/claim`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${user.token}`, 'Content-Type': 'application/json' },
+        token: user.token, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rowVersion: r.rowVersion }),
       });
       const data = await res.json();
@@ -484,9 +484,9 @@ export default function DashboardPage() {
   const releaseReferral = async (r: Referral) => {
     if (!user) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/referrals/${r.id}/release`, {
+      const res = await apiFetch(`/api/referrals/${r.id}/release`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${user.token}`, 'Content-Type': 'application/json' },
+        token: user.token, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rowVersion: r.rowVersion }),
       });
       const data = await res.json();
@@ -510,9 +510,9 @@ export default function DashboardPage() {
   const pauseSla = async (r: Referral) => {
     if (!user) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/referrals/${r.id}/pause-sla`, {
+      const res = await apiFetch(`/api/referrals/${r.id}/pause-sla`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${user.token}`, 'Content-Type': 'application/json' },
+        token: user.token, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rowVersion: r.rowVersion, reason: 'WaitingOnPatient' }),
       });
       const data = await res.json();
@@ -539,9 +539,9 @@ export default function DashboardPage() {
   const resumeSla = async (r: Referral) => {
     if (!user) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/referrals/${r.id}/resume-sla`, {
+      const res = await apiFetch(`/api/referrals/${r.id}/resume-sla`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${user.token}`, 'Content-Type': 'application/json' },
+        token: user.token, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rowVersion: r.rowVersion }),
       });
       const data = await res.json();
@@ -581,9 +581,9 @@ export default function DashboardPage() {
 
     setTransitionSaving(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/referrals/${r.id}/transition`, {
+      const res = await apiFetch(`/api/referrals/${r.id}/transition`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${user.token}`, 'Content-Type': 'application/json' },
+        token: user.token, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           newStatus: statusMap[nextStatus],
           rowVersion: r.rowVersion,
@@ -620,8 +620,8 @@ export default function DashboardPage() {
     setEditModalOpen(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/referrals/${r.id}`, {
-        headers: { Authorization: `Bearer ${user?.token}` }
+      const res = await apiFetch(`/api/referrals/${r.id}`, {
+        token: user?.token
       });
       if (res.ok) {
         const detail = await res.json();
@@ -646,9 +646,9 @@ export default function DashboardPage() {
     };
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/referrals/${editingReferral.id}`, {
+      const res = await apiFetch(`/api/referrals/${editingReferral.id}`, {
         method: 'PUT',
-        headers: { Authorization: `Bearer ${user.token}`, 'Content-Type': 'application/json' },
+        token: user.token, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           specialistType: editForm.specialistType,
           reason: editForm.reason,
@@ -685,9 +685,9 @@ export default function DashboardPage() {
         for (const file of newFiles) {
           const fileData = new FormData();
           fileData.append('file', file);
-          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/referrals/${editingReferral.id}/attachments`, {
+          await apiFetch(`/api/referrals/${editingReferral.id}/attachments`, {
             method: 'POST',
-            headers: { Authorization: `Bearer ${user.token}` },
+            token: user.token,
             body: fileData
           });
         }

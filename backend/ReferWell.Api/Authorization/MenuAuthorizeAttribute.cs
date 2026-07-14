@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.EntityFrameworkCore;
-using ReferWell.Domain.Enums;
-using ReferWell.Infrastructure.Data;
+using ReferWell.Application.Common.Interfaces;
 using System.Security.Claims;
 
 namespace ReferWell.Api.Authorization;
@@ -31,26 +29,14 @@ public sealed class MenuAuthorizeAttribute : Attribute, IAsyncAuthorizationFilte
         }
 
         var roleNames = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
-        var userRoles = new List<UserRole>();
-        foreach (var name in roleNames)
-        {
-            if (Enum.TryParse<UserRole>(name, ignoreCase: true, out var role))
-                userRoles.Add(role);
-        }
-
-        if (userRoles.Count == 0)
+        if (roleNames.Count == 0)
         {
             context.Result = new ForbidResult();
             return;
         }
 
-        var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
-        var hasAccess = await db.RoleMenuAccesses
-            .AsNoTracking()
-            .AnyAsync(m =>
-                m.MenuItem == _menuItem
-                && m.HasAccess
-                && userRoles.Contains(m.Role));
+        var checker = context.HttpContext.RequestServices.GetRequiredService<IMenuAccessChecker>();
+        var hasAccess = await checker.HasMenuAccessAsync(roleNames, _menuItem);
 
         if (!hasAccess)
             context.Result = new ForbidResult();

@@ -1,12 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ReferWell.Api.Authorization;
-using ReferWell.Domain.Entities;
-using ReferWell.Domain.Enums;
-using ReferWell.Infrastructure.Data;
-using ReferWell.Infrastructure.Services;
-using System.Security.Claims;
+using ReferWell.Api.Extensions;
+using ReferWell.Application.MenuAccess;
 
 namespace ReferWell.Api.Controllers;
 
@@ -15,54 +11,22 @@ namespace ReferWell.Api.Controllers;
 [Authorize]
 public class MenuAccessController : ControllerBase
 {
-    private readonly AppDbContext _db;
-    private readonly SecurityAuditService _audit;
+    private readonly IMenuAccessService _menuAccess;
 
-    public MenuAccessController(AppDbContext db, SecurityAuditService audit)
-    {
-        _db = db;
-        _audit = audit;
-    }
-
-    private Guid CurrentUserId =>
-        Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? User.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)!);
+    public MenuAccessController(IMenuAccessService menuAccess) => _menuAccess = menuAccess;
 
     [HttpGet]
-    public async Task<IActionResult> GetMenuAccess()
+    public async Task<IActionResult> GetMenuAccess(CancellationToken ct)
     {
-        var accesses = await _db.RoleMenuAccesses.ToListAsync();
-        return Ok(accesses);
+        var result = await _menuAccess.GetAsync(ct);
+        return result.ToActionResult(this);
     }
 
     [HttpPost]
     [MenuAuthorize("Menu Access")]
-    public async Task<IActionResult> UpdateMenuAccess([FromBody] List<RoleMenuAccessDto> req)
+    public async Task<IActionResult> UpdateMenuAccess([FromBody] List<RoleMenuAccessDto> req, CancellationToken ct)
     {
-        var dbAccesses = await _db.RoleMenuAccesses.ToListAsync();
-
-        foreach (var r in req)
-        {
-            var match = dbAccesses.FirstOrDefault(x => x.Role == r.Role && x.MenuItem == r.MenuItem);
-            if (match != null)
-            {
-                match.HasAccess = r.HasAccess;
-            }
-            else
-            {
-                _db.RoleMenuAccesses.Add(new RoleMenuAccess
-                {
-                    Role = r.Role,
-                    MenuItem = r.MenuItem,
-                    HasAccess = r.HasAccess
-                });
-            }
-        }
-
-        await _db.SaveChangesAsync();
-        await _audit.LogAsync("MenuAccessUpdated", CurrentUserId, details: $"Updated {req.Count} menu access rows");
-        return Ok(new { message = "Menu access configuration updated." });
+        var result = await _menuAccess.UpdateAsync(req, ct);
+        return result.ToActionResult(this);
     }
 }
-
-public record RoleMenuAccessDto(UserRole Role, string MenuItem, bool HasAccess);

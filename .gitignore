@@ -50,6 +50,10 @@ frontend/playwright-report/
 frontend/blob-report/
 frontend/playwright/.cache/
 
+# Request logs (local only; never commit)
+backend/logs/*.log
+frontend/logs/*.log
+
 # OS metadata
 Thumbs.db
 ehthumbs.db

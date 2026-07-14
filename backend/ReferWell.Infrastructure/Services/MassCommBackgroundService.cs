@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using ReferWell.Application.Common.Interfaces;
 using ReferWell.Domain.Entities;
 using ReferWell.Infrastructure.Data;
 using System.Threading.Channels;
@@ -10,11 +11,14 @@ namespace ReferWell.Infrastructure.Services;
 
 public record MassCommJob(Guid CampaignId, List<MassCommMessage> Messages);
 
-public class MassCommChannel
+public class MassCommChannel : IMassCommQueue
 {
     private readonly Channel<MassCommJob> _channel = Channel.CreateUnbounded<MassCommJob>();
     public ChannelWriter<MassCommJob> Writer => _channel.Writer;
     public ChannelReader<MassCommJob> Reader => _channel.Reader;
+
+    public Task EnqueueAsync(Guid campaignId, IReadOnlyList<MassCommMessage> messages, CancellationToken ct = default) =>
+        Writer.WriteAsync(new MassCommJob(campaignId, messages.ToList()), ct).AsTask();
 }
 
 public class MassCommBackgroundService : BackgroundService

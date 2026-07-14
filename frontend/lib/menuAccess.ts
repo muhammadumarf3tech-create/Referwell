@@ -1,3 +1,5 @@
+import { apiFetch } from '@/lib/api';
+
 export interface MenuAccessDto {
   role: number | string;
   menuItem: string;
@@ -30,9 +32,7 @@ export function hasMenuAccess(
 }
 
 export async function fetchMenuAccess(token: string): Promise<MenuAccessDto[]> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/menuaccess`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await apiFetch('/api/menuaccess', { token });
   if (!res.ok) return [];
   return res.json();
 }

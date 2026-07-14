@@ -1,3 +1,43 @@
+# Release Notes - ReferWell v1.2.0
+
+This release introduces a clean architecture refactoring of the backend API, moving core business logic and database orchestration into the `ReferWell.Application` layer. It also establishes a comprehensive, safe, and HIPAA-compliant request logging framework on both the ASP.NET Core backend and Next.js frontend, ensuring zero exposure of credentials, authorization tokens, request bodies, or Protected Health Information (PHI).
+
+---
+
+## Key Features & Refinements
+
+### 1. Clean Architecture Refactoring
+*   **Decoupled Controllers**: API controllers in `ReferWell.Api` are now lightweight entrypoints that delegate work to the application layer.
+*   **Application Services & Logic**: Core logic is moved to `ReferWell.Application` services, queries, and commands, enhancing testability, reuse, and single-responsibility principles.
+*   **Unified Application Setup**: Registered application dependencies dynamically via `DependencyInjection.cs` extension methods.
+
+### 2. ASP.NET Core Backend Request Logging
+*   **Security-First Middleware**: Implemented `RequestLoggingMiddleware` to capture HTTP methods, sanitized paths, HTTP status codes, execution durations, user IDs, and trace IDs.
+*   **Path & Query Sanitization**: Built `RequestLogSanitizer` to automatically redact sensitive query string parameters (`access_token`, `token`, `password`, `authorization`, `api_key`, `secret`).
+*   **No Payload Exposure**: Explicitly avoids logging request/response bodies, HTTP authorization headers, JWTs, and PHI payloads.
+*   **Asynchronous File Logging**: Configured a `RequestFileLogger` that enqueues log lines and flushes them to daily files (e.g., `requests-yyyy-MM-dd.log`) under `backend/logs/` asynchronously using a lock-free concurrent queue mechanism.
+
+### 3. Next.js Frontend Request Logging
+*   **API Wrapper Hook**: Integrated `apiFetch` inside `frontend/lib/api.ts` to automatically intercept frontend API calls, calculate request durations, and log sanitized request metadata.
+*   **Client Log Redaction**: Redacts query parameters before any logging or transmission using a frontend URL sanitizer.
+*   **Server-Side Log Persistence**: Developed a secure API route (`/api/request-log`) that accepts browser-originated request logs and writes them to dated logs under `frontend/logs/` while enforcing strict validation rules on incoming methods, path sizes, and statuses.
+
+### 4. Code Quality & Test Expansion
+*   **Expanded Unit Tests**: Increased C# backend unit tests to **39 passing tests** validating authentication, configurations, patient processing, user roles, menu access, and the SLA clock state machine.
+*   **Zero-Error Frontend Compilation**: Successfully verified the Next.js production build (`npm run build`) with zero linting or TypeScript compilation warnings.
+
+---
+
+## Technical Audit & Verification
+
+### C# Backend Unit Tests
+All 39 backend tests compile and pass cleanly:
+```bash
+Passed!  - Failed:     0, Passed:    39, Skipped:     0, Total:    39, Duration: 41 ms - ReferWell.Tests.dll (net8.0)
+```
+
+---
+
 # Release Notes - ReferWell v1.1.0
 
 ReferWell is a referral management and triage system. This release introduces advanced referral grid refining, SLA timer controls (SLA pausing and resuming), refined mass communications, dynamic menu-based authorization, security enhancements, and robust test coverage.

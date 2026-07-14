@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Key, Save, Loader2, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import { fetchMenuAccess, hasMenuAccess, type MenuAccessDto } from '@/lib/menuAccess';
+import { apiFetch } from '@/lib/api';
 
 const roleNames = ['Admin', 'TriageNurse', 'GP'];
 const roleEnumMap: Record<string, number> = {
@@ -91,12 +92,9 @@ export default function MenuAccessPage() {
         hasAccess: a.hasAccess
       }));
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/menuaccess`, {
+      const res = await apiFetch(`/api/menuaccess`, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-          'Content-Type': 'application/json'
-        },
+        token: user.token, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 

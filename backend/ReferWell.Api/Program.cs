@@ -3,9 +3,12 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using FluentValidation;
 using FluentValidation.AspNetCore;
-using ReferWell.Api.Validation;
+using ReferWell.Api.Logging;
+using ReferWell.Api.Middleware;
+using ReferWell.Api.Services;
+using ReferWell.Application;
+using ReferWell.Application.Common.Interfaces;
 using ReferWell.Infrastructure.Data;
 using ReferWell.Infrastructure.Hubs;
 using ReferWell.Infrastructure.Services;
@@ -20,6 +23,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         b => b.MigrationsAssembly("ReferWell.Infrastructure")));
+
+builder.Services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
 // ── JWT Authentication ────────────────────────────────────────────────────────
 var jwtConfig = builder.Configuration.GetSection("Jwt");
@@ -60,14 +65,26 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<SecurityAuditService>();
+builder.Services.AddScoped<ISecurityAuditLogger>(sp => sp.GetRequiredService<SecurityAuditService>());
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+builder.Services.AddScoped<IQueueNotifier, QueueNotifier>();
+builder.Services.AddScoped<IAttachmentStorage, AttachmentStorage>();
+builder.Services.AddScoped<IMenuAccessChecker, MenuAccessChecker>();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+builder.Services.AddSingleton<RequestFileLogger>();
 
 // ── SignalR ───────────────────────────────────────────────────────────────────
 builder.Services.AddSignalR();
 
 // ── Background Services ───────────────────────────────────────────────────────
 builder.Services.AddSingleton<MassCommChannel>();
+builder.Services.AddSingleton<IMassCommQueue>(sp => sp.GetRequiredService<MassCommChannel>());
 builder.Services.AddHostedService<MassCommBackgroundService>();
 builder.Services.AddHostedService<SlaBreachBackgroundService>();
+
+// ── Application layer ─────────────────────────────────────────────────────────
+builder.Services.AddApplication();
 
 // ── Upload limits (PDF attachments ≤ 20 MB) ───────────────────────────────────
 builder.Services.Configure<FormOptions>(o =>
@@ -91,7 +108,6 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -132,6 +148,9 @@ if (app.Environment.IsDevelopment())
 app.UseCors("FrontendPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Request logging (method/path/status/duration/user — no bodies or secrets)
+app.UseMiddleware<RequestLoggingMiddleware>();
 
 // OWASP: Security headers
 app.Use(async (context, next) =>

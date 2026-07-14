@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Http;
+using ReferWell.Application.Common.Interfaces;
 using ReferWell.Domain.Entities;
 using ReferWell.Infrastructure.Data;
 
 namespace ReferWell.Infrastructure.Services;
 
-public class SecurityAuditService
+public class SecurityAuditService : ISecurityAuditLogger
 {
     private readonly AppDbContext _db;
     private readonly IHttpContextAccessor _http;

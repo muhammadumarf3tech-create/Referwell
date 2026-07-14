@@ -8,6 +8,7 @@ import {
   Search, UserPlus, CheckCircle, Upload, X, ShieldAlert, Eye 
 } from 'lucide-react';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
 
 const formatDateOnly = (dateStr: string | null | undefined) => {
   if (!dateStr) return '—';
@@ -86,8 +87,8 @@ export default function NewReferralPage() {
     if (!user) return;
     setPatientLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patients?search=${encodeURIComponent(query)}`, {
-        headers: { Authorization: `Bearer ${user.token}` }
+      const res = await apiFetch(`/api/patients?search=${encodeURIComponent(query)}`, {
+        token: user.token
       });
       if (res.ok) setPatients(await res.json());
     } catch {
@@ -100,8 +101,8 @@ export default function NewReferralPage() {
   const loadUsers = async () => {
     if (!user) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
-        headers: { Authorization: `Bearer ${user.token}` }
+      const res = await apiFetch(`/api/users`, {
+        token: user.token
       });
       if (res.ok) {
         const uList: User[] = await res.json();
@@ -115,8 +116,8 @@ export default function NewReferralPage() {
   const loadNextCaseNo = async () => {
     if (!user) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/referrals/next-case-no`, {
-        headers: { Authorization: `Bearer ${user.token}` }
+      const res = await apiFetch(`/api/referrals/next-case-no`, {
+        token: user.token
       });
       if (res.ok) {
         const data = await res.json();
@@ -162,12 +163,9 @@ export default function NewReferralPage() {
     setPatientSaving(true);
     setPatientError('');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/patients`, {
+      const res = await apiFetch(`/api/patients`, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-          'Content-Type': 'application/json'
-        },
+        token: user.token, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...newPatientForm,
           nhiNumber: nhiClean,
@@ -221,12 +219,9 @@ export default function NewReferralPage() {
 
     try {
       // Create Referral
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/referrals`, {
+      const res = await apiFetch(`/api/referrals`, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-          'Content-Type': 'application/json'
-        },
+        token: user.token, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           patientId: selectedPatient.id,
           specialistType: form.specialistType,
@@ -251,9 +246,9 @@ export default function NewReferralPage() {
           const fileData = new FormData();
           fileData.append('file', file);
 
-          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/referrals/${referralId}/attachments`, {
+          await apiFetch(`/api/referrals/${referralId}/attachments`, {
             method: 'POST',
-            headers: { Authorization: `Bearer ${user.token}` },
+            token: user.token,
             body: fileData
           });
         }

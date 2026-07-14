@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, Calendar, CheckCircle2, ChevronDown, Eye, Filter, Loader2, MessageSquare, Plus, Search, Send, Users, X } from 'lucide-react';
 import { fetchMenuAccess, hasMenuAccess } from '@/lib/menuAccess';
+import { apiFetch } from '@/lib/api';
 
 type Campaign = { id: string; name: string; status: string; createdAt: string; createdByUser?: { fullName: string }; totalMessages: number; sentMessages: number; failedMessages: number };
 type Message = { id: string; recipientName: string; recipientEmail: string; recipientType: string; referralCaseNo: string; renderedSubject: string; renderedBody: string; status: string; sentAt?: string; errorMessage?: string };
@@ -81,9 +82,6 @@ export default function MassCommPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const api = process.env.NEXT_PUBLIC_API_URL;
-  const headers = () => ({ Authorization: `Bearer ${user?.token}` });
-
   useEffect(() => {
     if (isLoading) return;
     if (!user) { router.push('/login'); return; }
@@ -113,7 +111,7 @@ export default function MassCommPage() {
   }, [user, campaignSearch, campaignStatusFilter, campaignFromDate, campaignToDate, currentPage]);
 
   async function loadOptions() {
-    const optionResponse = await fetch(`${api}/api/masscomm/filter-options`, { headers: headers() });
+    const optionResponse = await apiFetch(`/api/masscomm/filter-options`, { token: user?.token });
     if (!optionResponse.ok) return;
     const data = await optionResponse.json();
     const rawAssignees: any[] = data.assignees ?? data.Assignees ?? [];
@@ -171,7 +169,7 @@ export default function MassCommPage() {
   async function loadCampaigns(page: number, silent = false) {
     if (!silent) setLoading(true);
     try {
-      const response = await fetch(`${api}/api/masscomm?${buildCampaignQuery(page)}`, { headers: headers() });
+      const response = await apiFetch(`/api/masscomm?${buildCampaignQuery(page)}`, { token: user?.token });
       if (!response.ok) return;
       const data = await response.json();
 
@@ -222,7 +220,7 @@ export default function MassCommPage() {
   useEffect(() => {
     if (!user || !selectedCampaign || selectedCampaign.status !== 'Sending') return;
     const loadMessages = async () => {
-      const response = await fetch(`${api}/api/masscomm/${selectedCampaign.id}/messages`, { headers: headers() });
+      const response = await apiFetch(`/api/masscomm/${selectedCampaign.id}/messages`, { token: user?.token });
       if (response.ok) setMessages(await response.json());
     };
     const interval = window.setInterval(() => { void loadMessages(); }, 1000);
@@ -245,7 +243,7 @@ export default function MassCommPage() {
   const requestPreview = async () => {
     setSaving(true);
     try {
-      const response = await fetch(`${api}/api/masscomm/preview`, { method: 'POST', headers: { ...headers(), 'Content-Type': 'application/json' }, body: JSON.stringify(requestPayload()) });
+      const response = await apiFetch(`/api/masscomm/preview`, { method: 'POST', token: user?.token, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestPayload()) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Unable to prepare preview.');
       setPreview(data); setStep('preview');
@@ -255,7 +253,7 @@ export default function MassCommPage() {
   const sendCampaign = async () => {
     setSaving(true);
     try {
-      const response = await fetch(`${api}/api/masscomm`, { method: 'POST', headers: { ...headers(), 'Content-Type': 'application/json' }, body: JSON.stringify(requestPayload()) });
+      const response = await apiFetch(`/api/masscomm`, { method: 'POST', token: user?.token, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestPayload()) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Unable to send campaign.');
       showToast('success', `${data.messageCount} messages queued for delivery.`);
@@ -268,7 +266,7 @@ export default function MassCommPage() {
   const viewMessages = async (campaign: Campaign) => {
     setSelectedCampaign(campaign);
     setMessages([]);
-    const response = await fetch(`${api}/api/masscomm/${campaign.id}/messages`, { headers: headers() });
+    const response = await apiFetch(`/api/masscomm/${campaign.id}/messages`, { token: user?.token });
     if (response.ok) setMessages(await response.json());
   };
   const clearCampaignFilters = () => {
