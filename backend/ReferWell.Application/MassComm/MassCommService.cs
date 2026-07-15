@@ -187,6 +187,7 @@ public class MassCommService : IMassCommService
             await SyncSlaBreachesAsync(ct);
 
         var query = _db.Referrals
+            .Include(r => r.CreatedByUser)
             .Include(r => r.AssignedToUser)
             .Include(r => r.Patient)
             .AsQueryable();
@@ -217,9 +218,10 @@ public class MassCommService : IMassCommService
         return referrals.Select(r =>
         {
             var isGp = string.Equals(req.RecipientType, "ReferringGP", StringComparison.OrdinalIgnoreCase);
-            // Referring GP notifications go to the assigned clinician (not the submitter)
-            var name = isGp ? r.AssignedToUser?.FullName : r.Patient?.Name;
-            var email = isGp ? r.AssignedToUser?.Email : r.Patient?.Email;
+            // Referring GP = submitting clinician (CreatedBy), not hospital-side AssignedTo.
+            var referringGp = r.CreatedByUser;
+            var name = isGp ? FormatUserName(referringGp) : r.Patient?.Name;
+            var email = isGp ? referringGp?.Email : r.Patient?.Email;
             return new ResolvedRecipient(r, name ?? string.Empty, email ?? string.Empty,
                 RenderTemplate(req.SubjectTemplate, r), RenderTemplate(req.BodyTemplate, r));
         }).Where(r => !string.IsNullOrWhiteSpace(r.Email)).ToList();
@@ -260,7 +262,15 @@ public class MassCommService : IMassCommService
             .Replace("{Urgency}", referral.Urgency == UrgencyLevel.SemiUrgent ? "Semi-Urgent" : referral.Urgency.ToString())
             .Replace("{SlaDeadline}", referral.SlaDeadline.ToString("dd MMM yyyy HH:mm"))
             .Replace("{ReceivedDate}", referral.ReceivedAt.ToString("dd MMM yyyy"))
-            .Replace("{ReferringGPName}", referral.AssignedToUser?.FullName ?? string.Empty);
+            .Replace("{ReferringGPName}", FormatUserName(referral.CreatedByUser));
+
+    private static string FormatUserName(ApplicationUser? user)
+    {
+        if (user == null) return string.Empty;
+        return string.IsNullOrWhiteSpace(user.Title)
+            ? user.FullName
+            : $"{user.Title} {user.FullName}";
+    }
 
     private record ResolvedRecipient(Referral Referral, string Name, string Email, string Subject, string Body);
 }

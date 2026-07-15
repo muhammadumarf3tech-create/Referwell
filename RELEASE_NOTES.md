@@ -1,3 +1,37 @@
+# Release Notes - ReferWell v1.2.1
+
+This release implements significant refinements to the Referral Triage and Queue Workflow. It secures referral access by partitioning views based on roles, ensures that referrals are submitted to a shared hospital queue as unassigned, and restricts assignee capabilities to hospital staff (Admin/Triage Nurse).
+
+---
+
+## Key Features & Refinements
+
+### 1. Secured Queue & Referral Visibility
+*   **GP Role Restriction**: Referring GPs can now only see and search for referrals that they created (`CreatedByUserId`), preventing them from accessing or searching other GPs' referrals.
+*   **Shared Hospital Triage Queue**: Admins and Triage Nurses retain complete access to all referrals in the shared triage queue.
+*   **Access Check Guards**: Integrated access checks (`CanAccessReferral`) in `ReferralService` to explicitly forbid GPs from retrieving, editing, transitioning, or claiming referrals they did not create.
+
+### 2. Auto-Assignment & Assignee Filtering
+*   **Initial Unassigned Queue**: New referrals created by GPs are submitted to the shared hospital queue as `Unassigned`, rather than being automatically assigned to the GP.
+*   **Claiming Auto-Assignment**: When a Triage Nurse or Admin claims a referral, the system now automatically updates `AssignedToUserId` to the claiming user.
+*   **Filtered Assignees**: Restructured the frontend dashboard filters and edit screens to only show hospital staff (Admins and Triage Nurses) in the Assignee dropdown list, ensuring that referring GPs cannot be assigned to triage tickets.
+
+### 3. Database Seeding & Migrations
+*   **Stable Seed Referrals**: Updated EF Core data seeding to use stable GUIDs for referral records and ensure correct, production-like assignee values (either unassigned or assigned to specific triage nurses/admins).
+*   **Shared Triage Migration**: Added a new database migration (`SharedQueueVisibilityAndNurse2`) representing the updated seeding configuration.
+
+---
+
+## Technical Audit & Verification
+
+### C# Backend Unit Tests
+All 39 backend tests compile and pass cleanly:
+```bash
+Passed!  - Failed:     0, Passed:    39, Skipped:     0, Total:    39, Duration: 44 ms - ReferWell.Tests.dll (net8.0)
+```
+
+---
+
 # Release Notes - ReferWell v1.2.0
 
 This release introduces a clean architecture refactoring of the backend API, moving core business logic and database orchestration into the `ReferWell.Application` layer. It also establishes a comprehensive, safe, and HIPAA-compliant request logging framework on both the ASP.NET Core backend and Next.js frontend, ensuring zero exposure of credentials, authorization tokens, request bodies, or Protected Health Information (PHI).

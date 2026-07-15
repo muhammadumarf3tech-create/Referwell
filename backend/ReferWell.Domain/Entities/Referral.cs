@@ -136,6 +136,8 @@ public class Referral
 
         ClaimedByUserId = userId;
         ClaimedAt = DateTime.Now;
+        // Claiming assigns hospital-side ownership for the shared triage queue.
+        AssignedToUserId = userId;
         UpdatedAt = DateTime.Now;
     }
 

@@ -25,7 +25,7 @@ This document maintains a complete history and audit trail of all AI assistant i
 | `fddacc44-36a2-42c6-9369-854f9879cabb` | 2026-07-10 | Port Update, Previews & Transitions | Set backend port, added logged-in login redirect, implemented PDF attachment preview on upload/edit, fixed status transition errors. |
 | `57b6f792-7a94-4c9c-b262-19c46fcdfcf6` | 2026-07-10 | Audit Logs, Role Saving Fix & UI Filters | Implemented audit log history timeline, fixed multi-role saving error, added search inside multi-select dropdown filters, and resolved auto-downloading preview issue. |
 | `18ab4383-eac4-4b04-b778-24c67ff08dbe` | 2026-07-12 | Mass Comm Refining, SLA & Menu Auth | Finalized referral grid filters, SLA pausing/resuming controls, and mass comm template validations. Integrated dynamic role-menu authorization and tests. |
-| `89671fce-a745-47ed-8e38-dcdb3af4d9bb` (Current) | 2026-07-14 | Clean Architecture & Request Logging | Refactored backend into application/domain layer, added comprehensive safe request logging on both C# backend and Next.js frontend, ensured zero token/payload exposure, and increased test coverage to 39 passing tests. |
+| `89671fce-a745-47ed-8e38-dcdb3af4d9bb` (Current) | 2026-07-14 | Clean Architecture, Request Logging & Referral Workflow Refinements | Refactored backend into application layer, added safe request logging on backend and frontend, and refined the shared hospital queue workflow (GP role-restriction, unassigned submissions, and automatic assignment on claim). |
 
 ---
 
@@ -69,12 +69,17 @@ This document maintains a complete history and audit trail of all AI assistant i
     *   Refactor backend controllers to delegate to the Application layer (Clean Architecture).
     *   Implement safe, redacted request logging on both the backend and frontend.
     *   Avoid logging sensitive tokens, passwords, bodies, or PHI.
+    *   Secure the referral triage queue workflow by restricting GP access, introducing unassigned submissions, filtering assignee options to hospital staff, and auto-assigning on claim.
     *   Verify with backend tests and frontend builds.
 *   **Modifications**:
     *   [AuthController.cs](file:///d:/AIProjects/ReferWell/backend/ReferWell.Api/Controllers/AuthController.cs) etc.: Delegated business logic to Application layer queries/commands.
     *   [RequestLoggingMiddleware.cs](file:///d:/AIProjects/ReferWell/backend/ReferWell.Api/Middleware/RequestLoggingMiddleware.cs): Appended request metadata (redacting sensitive keys) to daily files under `backend/logs/`.
     *   [route.ts (request-log API)](file:///d:/AIProjects/ReferWell/frontend/app/api/request-log/route.ts): Stored browser-originated API request logs into `frontend/logs/` safely.
     *   [api.ts](file:///d:/AIProjects/ReferWell/frontend/lib/api.ts) & [requestLogger.ts](file:///d:/AIProjects/ReferWell/frontend/lib/requestLogger.ts): Wrapped all fetch requests inside an automatic logging pipeline.
+    *   [ReferralService.cs](file:///d:/AIProjects/ReferWell/backend/ReferWell.Application/Referrals/ReferralService.cs): Restricted GPs to only see referrals they created; implemented access check guards (`CanAccessReferral`); kept GP-created referrals unassigned in queue.
+    *   [Referral.cs](file:///d:/AIProjects/ReferWell/backend/ReferWell.Domain/Entities/Referral.cs): Configured claim action to automatically assign the referral to the claiming user.
+    *   [AppDbContext.cs](file:///d:/AIProjects/ReferWell/backend/ReferWell.Infrastructure/Data/AppDbContext.cs): Updated seed data with stable GUIDs and correct assignee mappings.
+    *   [page.tsx on Dashboard](file:///d:/AIProjects/ReferWell/frontend/app/dashboard/page.tsx): Updated the dashboard filters and edit screens to only show hospital staff (Admins and Triage Nurses) in Assignee lists and reflect visibility role-restrictions.
 *   **Verification**:
     *   Passed all 39 backend tests cleanly via `dotnet test`.
     *   Successfully ran Next.js production build (`npm run build`).

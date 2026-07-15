@@ -78,9 +78,7 @@ export default function NewReferralPage() {
     loadPatients('');
     loadUsers();
     loadNextCaseNo();
-    
-    // Set default assignee to current user
-    setForm(f => ({ ...f, assignedToUserId: user.id }));
+    // Leave unassigned — referral lands in the shared hospital triage queue.
   }, [user, isLoading, router]);
 
   const loadPatients = async (query: string) => {
@@ -227,7 +225,7 @@ export default function NewReferralPage() {
           specialistType: form.specialistType,
           reason: form.reason,
           urgency: urgencyMap[form.urgency],
-          assignedToUserId: form.assignedToUserId || user.id
+          assignedToUserId: form.assignedToUserId || null
         })
       });
 
@@ -443,21 +441,24 @@ export default function NewReferralPage() {
               </div>
             </div>
 
-            {/* Assignee Option */}
+            {/* Optional hospital-staff assignee (not the referring GP) */}
             <div>
-              <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1.5 block">Assign Referral To</label>
+              <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1.5 block">Assign to hospital staff (optional)</label>
               <select 
                 value={form.assignedToUserId} 
                 onChange={e => setForm(f => ({...f, assignedToUserId: e.target.value}))} 
-                required
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
               >
-                {users.map(u => (
+                <option value="">Unassigned (shared triage queue)</option>
+                {users
+                  .filter(u => u.roles.includes('TriageNurse') || u.roles.includes('Admin'))
+                  .map(u => (
                   <option key={u.id} value={u.id}>
-                    {u.title ? u.title + ' ' : ''}{u.fullName} ({u.roles.join(', ')}) {u.id === user.id ? '[You]' : ''}
+                    {u.title ? u.title + ' ' : ''}{u.fullName} ({u.roles.join(', ')})
                   </option>
                 ))}
               </select>
+              <p className="mt-1 text-[11px] text-slate-400 font-medium">Leave unassigned so triage nurses can claim it from the shared queue.</p>
             </div>
 
             {/* Reason */}

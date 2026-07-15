@@ -211,35 +211,44 @@ public class AppDbContext : DbContext, IApplicationDbContext
         // ── Users ─────────────────────────────────────────────────────────────
         var adminId  = Guid.Parse("11111111-1111-1111-1111-111111111111");
         var nurseId  = Guid.Parse("22222222-2222-2222-2222-222222222222");
+        var nurse2Id = Guid.Parse("22222222-2222-2222-2222-222222222223");
         var gp1Id    = Guid.Parse("33333333-3333-3333-3333-333333333333");
         var gp2Id    = Guid.Parse("44444444-4444-4444-4444-444444444444");
 
+        // Fixed hashes so HasData stays stable across migrations/scaffolding.
         modelBuilder.Entity<ApplicationUser>().HasData(
             new ApplicationUser
             {
                 Id = adminId, FullName = "John Doe", Email = "admin@referwell.com",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+                PasswordHash = "$2a$11$FaqIjhGpeBhRttdpciDV.evK.8AdUHkmTDnqorFWPRynupHg30.6C",
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Local),
                 Title = "Mr.", Gender = "Male", PhoneNumber = "+64 21 111 2222"
             },
             new ApplicationUser
             {
                 Id = nurseId, FullName = "Sarah Jenkins", Email = "nurse@referwell.com",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Nurse@123"),
+                PasswordHash = "$2a$11$j6k17ycNvpAzipdPcHoHy.n6IGyy1wi765p78m5xSiRe40jCAIdU6",
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Local),
                 Title = "Mrs.", Gender = "Female", PhoneNumber = "+64 22 222 3333"
             },
             new ApplicationUser
             {
+                Id = nurse2Id, FullName = "Mia Thompson", Email = "nurse2@referwell.com",
+                PasswordHash = "$2a$11$A5/voTCx9k4WWH.BiyW2Se5PPFYSvc5Z2i8a2we/T.4TnlXHH3xqW",
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Local),
+                Title = "Ms.", Gender = "Female", PhoneNumber = "+64 22 222 3344"
+            },
+            new ApplicationUser
+            {
                 Id = gp1Id, FullName = "James Wilson", Email = "gp1@referwell.com",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Gp1@1234"),
+                PasswordHash = "$2a$11$OZJTg63KDXLJSIAVUGsRleYTDse/TmmBAQ7vK/fRF0ftDyaFKS8ZW",
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Local),
                 Title = "Dr.", Gender = "Male", PhoneNumber = "+64 27 333 4444"
             },
             new ApplicationUser
             {
                 Id = gp2Id, FullName = "Amelia Hart", Email = "gp2@referwell.com",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Gp2@1234"),
+                PasswordHash = "$2a$11$PgMX4BvRHGtGLoAvNgs1HOvs1op4moaSnonKkfmHI.8wpKKw6yXJq",
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Local),
                 Title = "Dr.", Gender = "Female", PhoneNumber = "+64 29 444 5555"
             }
@@ -249,6 +258,7 @@ public class AppDbContext : DbContext, IApplicationDbContext
         modelBuilder.Entity<ApplicationUserRole>().HasData(
             new ApplicationUserRole { Id = Guid.Parse("11111111-2222-3333-4444-555555555551"), UserId = adminId, Role = UserRole.Admin },
             new ApplicationUserRole { Id = Guid.Parse("11111111-2222-3333-4444-555555555552"), UserId = nurseId, Role = UserRole.TriageNurse },
+            new ApplicationUserRole { Id = Guid.Parse("11111111-2222-3333-4444-555555555555"), UserId = nurse2Id, Role = UserRole.TriageNurse },
             new ApplicationUserRole { Id = Guid.Parse("11111111-2222-3333-4444-555555555553"), UserId = gp1Id, Role = UserRole.GP },
             new ApplicationUserRole { Id = Guid.Parse("11111111-2222-3333-4444-555555555554"), UserId = gp2Id, Role = UserRole.GP }
         );
@@ -333,18 +343,18 @@ public class AppDbContext : DbContext, IApplicationDbContext
             new SystemConfig { Id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"), Key = "weight_patient",  Value = "20", Description = "Weight % for patient age in priority score", UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Local) }
         );
 
-        // ── Sample Referrals ──────────────────────────────────────────────────
+        // ── Sample Referrals (stable IDs; AssignedTo = hospital staff / unassigned, never the referring GP)
         var now = new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Local);
         var referrals = new[]
         {
-            new Referral { Id = Guid.NewGuid(), PatientId = p1Id, CreatedByUserId = gp1Id, AssignedToUserId = gp1Id, ReferringGPId = gp1Id.ToString(), SpecialistType = "Cardiology",    Reason = "Chest pain",         Urgency = UrgencyLevel.Urgent,     Status = ReferralStatus.Received, ReceivedAt = now.AddDays(-5),  SlaDeadline = now.AddDays(-4), CreatedAt = now.AddDays(-5),  PriorityScore = 75.5, CaseNo = "Ref-000001" },
-            new Referral { Id = Guid.NewGuid(), PatientId = p2Id, CreatedByUserId = gp1Id, AssignedToUserId = gp1Id, ReferringGPId = gp1Id.ToString(), SpecialistType = "Orthopedics",   Reason = "Knee pain",          Urgency = UrgencyLevel.Routine,    Status = ReferralStatus.Triaged,  ReceivedAt = now.AddDays(-10), SlaDeadline = now.AddDays(20), CreatedAt = now.AddDays(-10), PriorityScore = 30.2, CaseNo = "Ref-000002" },
-            new Referral { Id = Guid.NewGuid(), PatientId = p3Id, CreatedByUserId = gp2Id, AssignedToUserId = gp2Id, ReferringGPId = gp2Id.ToString(), SpecialistType = "Neurology",     Reason = "Recurring headaches",Urgency = UrgencyLevel.SemiUrgent, Status = ReferralStatus.Accepted, ReceivedAt = now.AddDays(-3),  SlaDeadline = now.AddDays(4),  CreatedAt = now.AddDays(-3),  PriorityScore = 55.0, CaseNo = "Ref-000003" },
-            new Referral { Id = Guid.NewGuid(), PatientId = p4Id, CreatedByUserId = gp2Id, AssignedToUserId = gp2Id, ReferringGPId = gp2Id.ToString(), SpecialistType = "Dermatology",   Reason = "Skin rash",          Urgency = UrgencyLevel.Routine,    Status = ReferralStatus.Booked,   ReceivedAt = now.AddDays(-15), SlaDeadline = now.AddDays(15), CreatedAt = now.AddDays(-15), PriorityScore = 22.8, CaseNo = "Ref-000004" },
-            new Referral { Id = Guid.NewGuid(), PatientId = p5Id, CreatedByUserId = gp1Id, AssignedToUserId = gp1Id, ReferringGPId = gp1Id.ToString(), SpecialistType = "Oncology",      Reason = "Mass detection",     Urgency = UrgencyLevel.Urgent,     Status = ReferralStatus.Received, ReceivedAt = now.AddDays(-1),  SlaDeadline = now.AddHours(-20),CreatedAt= now.AddDays(-1),  PriorityScore = 98.5, CaseNo = "Ref-000005" },
-            new Referral { Id = Guid.NewGuid(), PatientId = p6Id, CreatedByUserId = gp2Id, AssignedToUserId = gp2Id, ReferringGPId = gp2Id.ToString(), SpecialistType = "Gastroenterology",Reason = "Stomach issues",   Urgency = UrgencyLevel.SemiUrgent, Status = ReferralStatus.Received, ReceivedAt = now.AddDays(-2),  SlaDeadline = now.AddDays(5),  CreatedAt = now.AddDays(-2),  PriorityScore = 48.3, CaseNo = "Ref-000006" },
-            new Referral { Id = Guid.NewGuid(), PatientId = p7Id, CreatedByUserId = gp1Id, AssignedToUserId = gp1Id, ReferringGPId = gp1Id.ToString(), SpecialistType = "Ophthalmology", Reason = "Vision deterioration",Urgency = UrgencyLevel.Urgent,    Status = ReferralStatus.Declined, ReceivedAt = now.AddDays(-7),  SlaDeadline = now.AddDays(-6), CreatedAt = now.AddDays(-7),  PriorityScore = 66.1, CaseNo = "Ref-000007" },
-            new Referral { Id = Guid.NewGuid(), PatientId = p8Id, CreatedByUserId = gp2Id, AssignedToUserId = gp2Id, ReferringGPId = gp2Id.ToString(), SpecialistType = "Pulmonology",   Reason = "Chronic cough",      Urgency = UrgencyLevel.SemiUrgent, Status = ReferralStatus.Completed,ReceivedAt = now.AddDays(-20), SlaDeadline = now.AddDays(-13),CreatedAt= now.AddDays(-20), PriorityScore = 41.7, CaseNo = "Ref-000008" },
+            new Referral { Id = Guid.Parse("00d4a84e-bacd-4809-a9e7-f9e74382b239"), PatientId = p1Id, CreatedByUserId = gp1Id, AssignedToUserId = null, ReferringGPId = gp1Id.ToString(), SpecialistType = "Cardiology", Reason = "Chest pain", Urgency = UrgencyLevel.Urgent, Status = ReferralStatus.Received, ReceivedAt = now.AddDays(-5), SlaDeadline = now.AddDays(-4), CreatedAt = now.AddDays(-5), PriorityScore = 75.5, CaseNo = "Ref-000001" },
+            new Referral { Id = Guid.Parse("69bc44ef-4f7b-43bf-9f40-76b45b6f4bc7"), PatientId = p2Id, CreatedByUserId = gp1Id, AssignedToUserId = nurseId, ReferringGPId = gp1Id.ToString(), SpecialistType = "Orthopedics", Reason = "Knee pain", Urgency = UrgencyLevel.Routine, Status = ReferralStatus.Triaged, ReceivedAt = now.AddDays(-10), SlaDeadline = now.AddDays(20), CreatedAt = now.AddDays(-10), PriorityScore = 30.2, CaseNo = "Ref-000002" },
+            new Referral { Id = Guid.Parse("331af4bc-efb2-489d-88e6-382f7ee22669"), PatientId = p3Id, CreatedByUserId = gp2Id, AssignedToUserId = nurse2Id, ReferringGPId = gp2Id.ToString(), SpecialistType = "Neurology", Reason = "Recurring headaches", Urgency = UrgencyLevel.SemiUrgent, Status = ReferralStatus.Accepted, ReceivedAt = now.AddDays(-3), SlaDeadline = now.AddDays(4), CreatedAt = now.AddDays(-3), PriorityScore = 55.0, CaseNo = "Ref-000003" },
+            new Referral { Id = Guid.Parse("6409b75d-19aa-4551-8c20-0ab89938e697"), PatientId = p4Id, CreatedByUserId = gp2Id, AssignedToUserId = nurseId, ReferringGPId = gp2Id.ToString(), SpecialistType = "Dermatology", Reason = "Skin rash", Urgency = UrgencyLevel.Routine, Status = ReferralStatus.Booked, ReceivedAt = now.AddDays(-15), SlaDeadline = now.AddDays(15), CreatedAt = now.AddDays(-15), PriorityScore = 22.8, CaseNo = "Ref-000004" },
+            new Referral { Id = Guid.Parse("7feb7d42-ec25-41f3-bc42-1d3473d95156"), PatientId = p5Id, CreatedByUserId = gp1Id, AssignedToUserId = null, ReferringGPId = gp1Id.ToString(), SpecialistType = "Oncology", Reason = "Mass detection", Urgency = UrgencyLevel.Urgent, Status = ReferralStatus.Received, ReceivedAt = now.AddDays(-1), SlaDeadline = now.AddHours(-20), CreatedAt = now.AddDays(-1), PriorityScore = 98.5, CaseNo = "Ref-000005" },
+            new Referral { Id = Guid.Parse("02ceeb5e-d8f6-464f-8f88-046ecc59250d"), PatientId = p6Id, CreatedByUserId = gp2Id, AssignedToUserId = null, ReferringGPId = gp2Id.ToString(), SpecialistType = "Gastroenterology", Reason = "Stomach issues", Urgency = UrgencyLevel.SemiUrgent, Status = ReferralStatus.Received, ReceivedAt = now.AddDays(-2), SlaDeadline = now.AddDays(5), CreatedAt = now.AddDays(-2), PriorityScore = 48.3, CaseNo = "Ref-000006" },
+            new Referral { Id = Guid.Parse("ffd08b3d-b7db-469d-8cd9-54be52d5d192"), PatientId = p7Id, CreatedByUserId = gp1Id, AssignedToUserId = nurseId, ReferringGPId = gp1Id.ToString(), SpecialistType = "Ophthalmology", Reason = "Vision deterioration", Urgency = UrgencyLevel.Urgent, Status = ReferralStatus.Declined, ReceivedAt = now.AddDays(-7), SlaDeadline = now.AddDays(-6), CreatedAt = now.AddDays(-7), PriorityScore = 66.1, CaseNo = "Ref-000007" },
+            new Referral { Id = Guid.Parse("0f76eb06-80a7-46b4-837d-4df255fa224f"), PatientId = p8Id, CreatedByUserId = gp2Id, AssignedToUserId = nurse2Id, ReferringGPId = gp2Id.ToString(), SpecialistType = "Pulmonology", Reason = "Chronic cough", Urgency = UrgencyLevel.SemiUrgent, Status = ReferralStatus.Completed, ReceivedAt = now.AddDays(-20), SlaDeadline = now.AddDays(-13), CreatedAt = now.AddDays(-20), PriorityScore = 41.7, CaseNo = "Ref-000008" },
         };
 
         modelBuilder.Entity<Referral>().HasData(referrals);

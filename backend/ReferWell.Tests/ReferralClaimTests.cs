@@ -15,6 +15,7 @@ public class ReferralClaimTests
         referral.Claim(user1);
 
         Assert.Equal(user1, referral.ClaimedByUserId);
+        Assert.Equal(user1, referral.AssignedToUserId);
         Assert.NotNull(referral.ClaimedAt);
 
         referral.Claim(user1);

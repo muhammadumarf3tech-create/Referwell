@@ -169,6 +169,7 @@ interface Referral {
   rowVersion: string;
   createdByUser?: { fullName: string; email: string; title?: string };
   claimedByUser?: { fullName: string; email: string; title?: string } | null;
+  assignedToUserId?: string | null;
   assignedToUser?: { fullName: string; email: string; title?: string } | null;
   attachments?: Attachment[];
   claimedAt?: string | null;
@@ -468,7 +469,9 @@ export default function DashboardPage() {
         setReferrals(prev => prev.map(item => item.id === r.id ? { 
           ...item, 
           rowVersion: data.rowVersion, 
-          claimedByUser: { fullName: user.fullName, email: user.email, title: user.title || '' } 
+          claimedByUser: { fullName: user.fullName, email: user.email, title: user.title || '' },
+          assignedToUserId: user.id,
+          assignedToUser: { fullName: user.fullName, email: user.email, title: user.title || '' },
         } : item));
         fetchReferrals(); 
       }
@@ -609,12 +612,19 @@ export default function DashboardPage() {
   };
 
   const handleEditClick = async (r: Referral) => {
+    const norm = (id?: string | null) => (id || '').toLowerCase();
+    const resolveAssigneeId = (ref: Referral) => {
+      if (ref.assignedToUserId) return norm(ref.assignedToUserId);
+      if (!ref.assignedToUser?.email) return '';
+      return norm(users.find(u => u.email.toLowerCase() === ref.assignedToUser!.email.toLowerCase())?.id);
+    };
+
     setEditingReferral(r);
     setEditForm({
       specialistType: r.specialistType,
       reason: r.reason,
       urgency: r.urgency,
-      assignedToUserId: r.assignedToUser ? users.find(u => u.email === r.assignedToUser?.email)?.id || '' : ''
+      assignedToUserId: resolveAssigneeId(r)
     });
     setNewFiles([]);
     setEditModalOpen(true);
@@ -625,11 +635,20 @@ export default function DashboardPage() {
       });
       if (res.ok) {
         const detail = await res.json();
+        const assigneeId = detail.assignedToUserId
+          ? norm(detail.assignedToUserId)
+          : (detail.assignedToUser?.email
+            ? norm(users.find(u => u.email.toLowerCase() === detail.assignedToUser.email.toLowerCase())?.id)
+            : '');
         setEditingReferral(prev => prev && prev.id === r.id ? {
           ...prev,
           auditLogs: detail.auditLogs,
-          rowVersion: detail.rowVersion
+          rowVersion: detail.rowVersion,
+          assignedToUserId: detail.assignedToUserId ?? prev.assignedToUserId,
+          assignedToUser: detail.assignedToUser ?? prev.assignedToUser,
+          claimedByUser: detail.claimedByUser ?? prev.claimedByUser,
         } : prev);
+        setEditForm(f => ({ ...f, assignedToUserId: assigneeId || f.assignedToUserId }));
       }
     } catch (err) {
       console.error("Failed to fetch referral details", err);
@@ -738,7 +757,7 @@ export default function DashboardPage() {
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Referral Queue</h1>
             <p className="text-slate-500 text-sm mt-1 font-medium">
-              {isGP ? 'Your submitted and assigned referrals' : 'All active referrals — sorted by priority score'}
+              {isGP ? 'Referrals you submitted — sorted by priority score' : 'Shared hospital triage queue — sorted by priority score'}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -866,10 +885,12 @@ export default function DashboardPage() {
               onChange={setFilterUrgency}
             />
 
-            {user.roles.includes('Admin') && (
+            {(user.roles.includes('Admin') || user.roles.includes('TriageNurse')) && (
               <MultiSelect
                 label="Assignee"
-                options={users.map(u => ({
+                options={users
+                  .filter(u => u.roles.includes('TriageNurse') || u.roles.includes('Admin'))
+                  .map(u => ({
                   value: u.id,
                   label: `${u.title ? u.title + ' ' : ''}${u.fullName}`
                 }))}
@@ -1015,16 +1036,18 @@ export default function DashboardPage() {
                     {/* Assigned User display */}
                     <div className="hidden lg:flex items-center gap-1.5 text-slate-500 text-xs font-semibold shrink-0">
                       <User className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="truncate max-w-[120px]">
+                      <span className="whitespace-nowrap" title={r.assignedToUser ? `${r.assignedToUser.title ? r.assignedToUser.title + ' ' : ''}${r.assignedToUser.fullName}` : 'Unassigned'}>
                         {r.assignedToUser ? (r.assignedToUser.title ? r.assignedToUser.title + ' ' : '') + r.assignedToUser.fullName : 'Unassigned'}
                       </span>
                     </div>
 
                     {/* Claimed badge */}
                     {r.claimedByUser && (
-                      <div className="hidden md:flex items-center gap-1 text-[10px] font-bold text-amber-700 border border-amber-200 bg-amber-50 rounded-full px-2 py-0.5 shrink-0">
-                        <Lock className="w-3.5 h-3.5 text-amber-600" />
-                        <span className="truncate max-w-[80px]">Claimed: {r.claimedByUser.title ? r.claimedByUser.title + ' ' : ''}{r.claimedByUser.fullName}</span>
+                      <div className="hidden md:flex items-center gap-1 text-[10px] font-bold text-amber-700 border border-amber-200 bg-amber-50 rounded-full px-2.5 py-0.5 shrink-0 max-w-none">
+                        <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        <span className="whitespace-nowrap">
+                          Claimed: {r.claimedByUser.title ? r.claimedByUser.title + ' ' : ''}{r.claimedByUser.fullName}
+                        </span>
                       </div>
                     )}
 
@@ -1331,18 +1354,19 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  {/* Assigned User */}
+                  {/* Hospital-side assignee */}
                   <div>
-                    <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1.5 block">Assigned Assignee</label>
+                    <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1.5 block">Assigned hospital staff</label>
                     <select 
                       value={editForm.assignedToUserId} 
                       onChange={e => setEditForm(f => ({...f, assignedToUserId: e.target.value}))}
-                      required
                       className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
                     >
-                      <option value="">Unassigned</option>
-                      {users.map(u => (
-                        <option key={u.id} value={u.id}>
+                      <option value="">Unassigned (shared queue)</option>
+                      {users
+                        .filter(u => u.roles.includes('TriageNurse') || u.roles.includes('Admin'))
+                        .map(u => (
+                        <option key={u.id} value={u.id.toLowerCase()}>
                           {u.title ? u.title + ' ' : ''}{u.fullName} ({u.roles.join(', ')})
                         </option>
                       ))}

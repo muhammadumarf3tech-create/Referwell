@@ -35,9 +35,10 @@ The database seeds default users for testing the Role-Based Access Control (RBAC
 | Role | Email | Password | Permissions Scope |
 | :--- | :--- | :--- | :--- |
 | **Admin** | `admin@referwell.com` | `Admin@123` | Can view all referrals, manage user profiles, modify dynamic priority weights. |
-| **Triage Nurse** | `nurse@referwell.com` | `Nurse@123` | Can view all referrals, claim/triage active items, send mass templates. |
-| **GP (Dr. James)** | `gp1@referwell.com` | `Gp1@1234` | Can only view their own patients' referrals, create new referrals. |
-| **GP (Dr. Amelia)** | `gp2@referwell.com` | `Gp2@1234` | Can only view their own patients' referrals, create new referrals. |
+| **Triage Nurse** | `nurse@referwell.com` | `Nurse@123` | Shared hospital queue: view all referrals, claim/triage, send mass templates. |
+| **Triage Nurse 2** | `nurse2@referwell.com` | `Nurse2@123` | Same as Triage Nurse (second coordinator for concurrency demos). |
+| **GP (Dr. James)** | `gp1@referwell.com` | `Gp1@1234` | Create referrals; can only view referrals they submitted. |
+| **GP (Dr. Amelia)** | `gp2@referwell.com` | `Gp2@1234` | Create referrals; can only view referrals they submitted. |
 
 ---
 

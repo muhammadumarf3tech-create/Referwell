@@ -292,7 +292,7 @@ public class ReferralImportService : IReferralImportService
     {
         var currentUserId = _currentUser.UserId;
         var weights = await GetWeights(ct);
-        var users = await _db.Users.AsNoTracking().ToListAsync(ct);
+        var users = await _db.Users.AsNoTracking().Include(u => u.UserRoles).ToListAsync(ct);
         var usersByEmail = users
             .Where(u => !string.IsNullOrWhiteSpace(u.Email))
             .GroupBy(u => u.Email.Trim(), StringComparer.OrdinalIgnoreCase)
@@ -486,7 +486,7 @@ public class ReferralImportService : IReferralImportService
                 return new RowError("DateOfBirth", "Date of birth cannot be in the future.");
         }
 
-        Guid assignedToUserId = currentUserId;
+        Guid? assignedToUserId = null;
         if (!string.IsNullOrWhiteSpace(assignedEmail))
         {
             if (!usersByEmail.TryGetValue(assignedEmail, out var assignee))
@@ -494,12 +494,16 @@ public class ReferralImportService : IReferralImportService
             assignedToUserId = assignee.Id;
         }
 
+        // Referring GP = submitting clinician (sets CreatedBy + ReferringGPId). Leave blank to use the importer.
         Guid createdByUserId = currentUserId;
         string referringGpId = currentUserId.ToString();
         if (!string.IsNullOrWhiteSpace(referringEmail))
         {
             if (!usersByEmail.TryGetValue(referringEmail, out var gp))
                 return new RowError("ReferringGpEmail", $"User not found for email '{referringEmail}'.");
+            var isGpRole = gp.UserRoles.Any(ur => ur.Role == UserRole.GP);
+            if (!isGpRole)
+                return new RowError("ReferringGpEmail", $"User '{referringEmail}' is not a GP. ReferringGpEmail must be the submitting GP.");
             createdByUserId = gp.Id;
             referringGpId = gp.Id.ToString();
         }

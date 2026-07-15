@@ -3,6 +3,7 @@ import { expect, type Page } from '@playwright/test';
 export const users = {
   admin: { email: 'admin@referwell.com', password: 'Admin@123', roleLabel: 'Admin' },
   nurse: { email: 'nurse@referwell.com', password: 'Nurse@123', roleLabel: 'Triage Nurse' },
+  nurse2: { email: 'nurse2@referwell.com', password: 'Nurse2@123', roleLabel: 'Triage Nurse' },
   gp: { email: 'gp1@referwell.com', password: 'Gp1@1234', roleLabel: 'GP' },
 } as const;
 

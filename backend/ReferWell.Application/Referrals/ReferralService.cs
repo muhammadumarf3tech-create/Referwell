@@ -51,9 +51,12 @@ public class ReferralService : IReferralService
             .Include(r => r.Attachments)
             .AsQueryable();
 
-        if (!_currentUser.IsInRole("Admin"))
+        // Shared hospital queue: Admin + TriageNurse see all. GPs see only referrals they created.
+        if (_currentUser.IsInRole("GP")
+            && !_currentUser.IsInRole("Admin")
+            && !_currentUser.IsInRole("TriageNurse"))
         {
-            query = query.Where(r => r.AssignedToUserId == _currentUser.UserId);
+            query = query.Where(r => r.CreatedByUserId == _currentUser.UserId);
         }
         else if (!string.IsNullOrEmpty(q.AssignedTo))
         {
@@ -168,6 +171,7 @@ public class ReferralService : IReferralService
                 r.RowVersion,
                 CreatedByUser = r.CreatedByUser == null ? null : new { r.CreatedByUser.FullName, r.CreatedByUser.Email, r.CreatedByUser.Title },
                 ClaimedByUser = r.ClaimedByUser == null ? null : new { r.ClaimedByUser.FullName, r.ClaimedByUser.Email, r.ClaimedByUser.Title },
+                AssignedToUserId = r.AssignedToUserId,
                 AssignedToUser = r.AssignedToUser == null ? null : new { r.AssignedToUser.FullName, r.AssignedToUser.Email, r.AssignedToUser.Title },
                 Attachments = r.Attachments.Select(a => new { a.Id, a.FileName, a.FilePath, a.ContentType }).ToList(),
                 r.ClaimedAt
@@ -229,7 +233,8 @@ public class ReferralService : IReferralService
             ReferringGPId = _currentUser.UserId.ToString(),
             ReceivedAt = receivedAt,
             SlaDeadline = Referral.CalculateSlaDeadline(request.Urgency, receivedAt),
-            AssignedToUserId = request.AssignedToUserId ?? _currentUser.UserId,
+            // Hospital queue: leave unassigned unless explicitly assigned to hospital staff.
+            AssignedToUserId = request.AssignedToUserId,
             CaseNo = caseNo
         };
 
@@ -305,6 +310,9 @@ public class ReferralService : IReferralService
         var referral = await _db.Referrals.FindAsync(new object[] { id }, ct);
         if (referral == null) return AppResult.NotFound();
 
+        if (!CanAccessReferral(referral))
+            return AppResult.Forbid();
+
         _db.Entry(referral).Property(r => r.RowVersion).OriginalValue = req.RowVersion;
 
         try
@@ -352,6 +360,9 @@ public class ReferralService : IReferralService
         var referral = await _db.Referrals.FindAsync(new object[] { id }, ct);
         if (referral == null) return AppResult.NotFound();
 
+        if (!CanAccessReferral(referral))
+            return AppResult.Forbid();
+
         try
         {
             var fromStatus = referral.Status;
@@ -389,6 +400,9 @@ public class ReferralService : IReferralService
     {
         var referral = await _db.Referrals.FindAsync(new object[] { id }, ct);
         if (referral == null) return AppResult.NotFound();
+
+        if (!CanAccessReferral(referral))
+            return AppResult.Forbid();
 
         if (referral.ClaimedByUserId.HasValue && referral.ClaimedByUserId != _currentUser.UserId)
             return AppResult.Conflict("This referral is claimed by another user. Claim or release it before pausing SLA.");
@@ -433,6 +447,9 @@ public class ReferralService : IReferralService
     {
         var referral = await _db.Referrals.FindAsync(new object[] { id }, ct);
         if (referral == null) return AppResult.NotFound();
+
+        if (!CanAccessReferral(referral))
+            return AppResult.Forbid();
 
         if (referral.ClaimedByUserId.HasValue && referral.ClaimedByUserId != _currentUser.UserId)
             return AppResult.Conflict("This referral is claimed by another user. Claim or release it before resuming SLA.");
@@ -581,9 +598,8 @@ public class ReferralService : IReferralService
         if (_currentUser.IsInRole("Admin") || _currentUser.IsInRole("TriageNurse"))
             return true;
 
-        return referral.AssignedToUserId == _currentUser.UserId
-            || referral.CreatedByUserId == _currentUser.UserId
-            || referral.ClaimedByUserId == _currentUser.UserId;
+        // GPs: referrals they created (referring clinician view).
+        return referral.CreatedByUserId == _currentUser.UserId;
     }
 
     private async Task SyncSlaBreachesAsync(CancellationToken ct)

@@ -391,7 +391,7 @@ export default function ReferralImportPage() {
               ))}
             </div>
             <p className="text-xs text-slate-500 mt-2">
-              Optional: PatientEmail, PatientPhone, Gender, Status, ReceivedAt, AssignedToEmail, ReferringGpEmail, LegacyCaseNo.
+              Optional: PatientEmail, PatientPhone, Gender, Status, ReceivedAt, AssignedToEmail (hospital staff), ReferringGpEmail (submitting GP — sets CreatedBy), LegacyCaseNo. Leave AssignedToEmail blank for the shared triage queue.
               When <code className="text-blue-700">LegacyCaseNo</code> is provided it is kept as the referral CaseNo (not replaced with Ref-######). Imported rows are marked Migrated.
             </p>
           </div>

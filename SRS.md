@@ -42,8 +42,8 @@ ReferWell replaces fragmented legacy databases and spreadsheets. It operates as 
 
 ### 2.3 User Classes and Characteristics
 1.  **Admin**: Manages system users. Can view all active referrals. Configures the urgency, wait time, and patient age weights in the prioritization formula.
-2.  **Triage Nurse**: Performs primary triage. Claims referrals, transitions their status along the state machine, and drafts/sends bulk communication campaigns.
-3.  **GP (General Practitioner)**: Submits patient referrals. Can only see referrals they created (filtered view). Has no access to configurations, user management, or mass communications.
+2.  **Triage Nurse**: Performs primary triage on the shared hospital queue (sees all referrals). Claims referrals (which assigns hospital-side ownership), transitions their status along the state machine, and drafts/sends bulk communication campaigns.
+3.  **GP (General Practitioner)**: Submits patient referrals into the shared queue (typically unassigned). Can only see referrals they created (filtered view). Has no access to configurations, user management, or mass communications. `AssignedTo` means hospital staff handling the case — not the referring GP.
 
 ### 2.4 Operating Environment
 *   **Client**: Modern web browsers (Chrome, Edge, Firefox, Safari) running Next.js.
@@ -68,7 +68,8 @@ ReferWell replaces fragmented legacy databases and spreadsheets. It operates as 
 *   **FR-1.5**: Sessions must support safe sign-out by purging JWT tokens from client local storage.
 
 ### 3.2 Referral Submission & State Machine
-*   **FR-2.1**: GPs must be able to submit referrals containing: Patient Name, Patient DOB, Specialist Type, Reason for Referral, and Urgency Level.
+*   **FR-2.1**: GPs must be able to submit referrals containing: Patient Name, Patient DOB, Specialist Type, Reason for Referral, and Urgency Level. New referrals enter the shared hospital queue unassigned (or optionally pre-assigned to Triage Nurse / Admin staff).
+*   **FR-2.1a**: Triage Nurses and Admins must see all referrals in the queue. GPs must only see referrals they created.
 *   **FR-2.2**: The system must enforce the following states:
     `Received -> Triaged -> Accepted/Declined -> Booked -> Completed`
 *   **FR-2.3**: Transitions must validate against allowed paths:
@@ -102,7 +103,8 @@ ReferWell replaces fragmented legacy databases and spreadsheets. It operates as 
 
 ### 3.6 Mass Communications Throttled Module
 *   **FR-6.1**: Nurses/Admins must be able to create campaigns, filtering recipients by status or urgency.
-*   **FR-6.2**: The email template must interpolate merge fields: `{PatientName}`, `{SpecialistType}`, `{Status}`, and `{SlaDeadline}`.
+*   **FR-6.2**: The email template must interpolate merge fields including `{PatientName}`, `{SpecialistType}`, `{Status}`, `{SlaDeadline}`, and `{ReferringGPName}` (submitting GP / `CreatedBy`).
+*   **FR-6.2a**: Recipient type **Referring GP** must email the submitting clinician (`CreatedByUser`), not hospital-side `AssignedTo`.
 *   **FR-6.3**: Outgoing messages must be enqueued into an in-memory queue channel.
 *   **FR-6.4**: A background service must process the channel at a throttled rate of 2 messages per second.
 

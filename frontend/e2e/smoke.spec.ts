@@ -47,7 +47,7 @@ test.describe('Role landing pages', () => {
   test('GP lands on queue and can open new referral', async ({ page }) => {
     await login(page, users.gp.email, users.gp.password);
     await expect(page.getByRole('heading', { name: 'Referral Queue' })).toBeVisible();
-    await expect(page.getByText(/Your submitted and assigned referrals/i)).toBeVisible();
+    await expect(page.getByText(/Referrals you submitted/i)).toBeVisible();
 
     await page.getByRole('button', { name: 'New Referral' }).click();
     await expect(page).toHaveURL(/\/referrals\/new/);

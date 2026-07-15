@@ -8,6 +8,7 @@ import { Activity, Eye, EyeOff, Lock, Mail, AlertCircle, Loader2 } from 'lucide-
 const quickLogins = process.env.NODE_ENV === 'development' ? [
   { label: 'Admin',       email: 'admin@referwell.com', password: 'Admin@123',  color: 'text-purple-600 border-purple-200 hover:bg-purple-50' },
   { label: 'Triage Nurse', email: 'nurse@referwell.com', password: 'Nurse@123', color: 'text-blue-600 border-blue-200 hover:bg-blue-50' },
+  { label: 'Triage Nurse 2', email: 'nurse2@referwell.com', password: 'Nurse2@123', color: 'text-sky-600 border-sky-200 hover:bg-sky-50' },
   { label: 'GP (Dr. Wilson)', email: 'gp1@referwell.com', password: 'Gp1@1234', color: 'text-emerald-600 border-emerald-200 hover:bg-emerald-50' },
   { label: 'GP (Dr. Hart)', email: 'gp2@referwell.com', password: 'Gp2@1234', color: 'text-teal-600 border-teal-200 hover:bg-teal-50' },
 ] : [];
