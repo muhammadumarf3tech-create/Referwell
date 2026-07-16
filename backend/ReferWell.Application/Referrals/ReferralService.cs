@@ -129,7 +129,12 @@ public class ReferralService : IReferralService
             query = query.Where(r => r.IsMigrated == q.IsMigrated.Value);
         }
 
+        var overallCount = await query.CountAsync(ct);
+        var activeCount = await query.CountAsync(r => r.Status != ReferralStatus.Completed && r.Status != ReferralStatus.Declined, ct);
+        var urgentCount = await query.CountAsync(r => r.Urgency == UrgencyLevel.Urgent && r.Status != ReferralStatus.Completed && r.Status != ReferralStatus.Declined, ct);
+        var breachedCount = await query.CountAsync(r => r.SlaBreach && !r.SlaPaused && r.Status != ReferralStatus.Completed && r.Status != ReferralStatus.Declined, ct);
         var completedCount = await query.CountAsync(r => r.Status == ReferralStatus.Completed, ct);
+        var declinedCount = await query.CountAsync(r => r.Status == ReferralStatus.Declined, ct);
 
         if (statusFilter != null)
             query = query.Where(r => statusFilter.Contains(r.Status));
@@ -146,9 +151,6 @@ public class ReferralService : IReferralService
         }
 
         var totalCount = await query.CountAsync(ct);
-        var activeCount = await query.CountAsync(r => r.Status != ReferralStatus.Completed && r.Status != ReferralStatus.Declined, ct);
-        var urgentCount = await query.CountAsync(r => r.Urgency == UrgencyLevel.Urgent && r.Status != ReferralStatus.Completed, ct);
-        var breachedCount = await query.CountAsync(r => r.SlaBreach && !r.SlaPaused, ct);
 
         var referrals = await query
             .Skip((page - 1) * pageSize)
@@ -189,10 +191,12 @@ public class ReferralService : IReferralService
         {
             items = referrals,
             totalCount,
+            overallCount,
             activeCount,
             urgentCount,
             breachedCount,
             completedCount,
+            declinedCount,
             page,
             pageSize,
             totalPages

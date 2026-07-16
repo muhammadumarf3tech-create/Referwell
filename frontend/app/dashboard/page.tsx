@@ -273,7 +273,7 @@ export default function DashboardPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [stats, setStats] = useState({ total: 0, active: 0, urgent: 0, breached: 0, completed: 0 });
+  const [stats, setStats] = useState({ total: 0, active: 0, urgent: 0, breached: 0, completed: 0, declined: 0 });
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const hubRef = useRef<signalR.HubConnection | null>(null);
 
@@ -372,11 +372,12 @@ export default function DashboardPage() {
         setTotalPages(data.totalPages);
         setTotalCount(data.totalCount);
         setStats({
-          total: data.totalCount,
-          active: data.activeCount,
-          urgent: data.urgentCount,
-          breached: data.breachedCount,
+          total: data.overallCount ?? 0,
+          active: data.activeCount ?? 0,
+          urgent: data.urgentCount ?? 0,
           completed: data.completedCount ?? 0,
+          declined: data.declinedCount ?? 0,
+          breached: data.breachedCount ?? 0,
         });
         setCurrentPage(pageToFetch);
       }
@@ -724,6 +725,7 @@ export default function DashboardPage() {
   };
 
   const isCompletedFilterActive = filterStatus.length === 1 && filterStatus[0] === 'Completed';
+  const isDeclinedFilterActive = filterStatus.length === 1 && filterStatus[0] === 'Declined';
 
   // Stats are bound from state variable updated by the backend
 
@@ -778,7 +780,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
           {[
             { label: 'Total Referrals', value: stats.total, color: 'text-blue-600', bg: 'bg-white border-blue-100', onClick: undefined as (() => void) | undefined },
             { label: 'Active Triages', value: stats.active, color: 'text-emerald-600', bg: 'bg-white border-emerald-100', onClick: undefined as (() => void) | undefined },
@@ -789,6 +791,13 @@ export default function DashboardPage() {
               color: 'text-slate-600',
               bg: isCompletedFilterActive ? 'bg-slate-100 border-slate-300 ring-2 ring-slate-200' : 'bg-white border-slate-200',
               onClick: () => setFilterStatus(prev => (prev.length === 1 && prev[0] === 'Completed' ? [] : ['Completed'])),
+            },
+            {
+              label: 'Declined',
+              value: stats.declined,
+              color: 'text-red-500',
+              bg: isDeclinedFilterActive ? 'bg-red-50 border-red-200 ring-2 ring-red-100' : 'bg-white border-slate-200',
+              onClick: () => setFilterStatus(prev => (prev.length === 1 && prev[0] === 'Declined' ? [] : ['Declined'])),
             },
             {
               label: 'SLA Breached',
@@ -805,7 +814,7 @@ export default function DashboardPage() {
               disabled={!s.onClick}
               className={`${s.bg} border rounded-xl p-4 shadow-sm text-left transition-all ${
                 s.onClick
-                  ? s.label === 'Completed'
+                  ? s.label === 'Completed' || s.label === 'Declined'
                     ? 'cursor-pointer hover:border-slate-300'
                     : 'cursor-pointer hover:border-red-300'
                   : 'cursor-default'
@@ -814,7 +823,9 @@ export default function DashboardPage() {
                 s.onClick
                   ? s.label === 'Completed'
                     ? (isCompletedFilterActive ? 'Clear completed filter' : 'Filter to completed referrals')
-                    : (filterSlaBreach ? 'Clear SLA breach filter' : 'Filter to SLA-breached referrals')
+                    : s.label === 'Declined'
+                      ? (isDeclinedFilterActive ? 'Clear declined filter' : 'Filter to declined referrals')
+                      : (filterSlaBreach ? 'Clear SLA breach filter' : 'Filter to SLA-breached referrals')
                   : undefined
               }
             >
@@ -823,6 +834,11 @@ export default function DashboardPage() {
               {s.label === 'Completed' && (
                 <p className="text-[10px] text-slate-500 font-bold mt-1">
                   {isCompletedFilterActive ? 'Filter active — click to clear' : 'Click to view completed'}
+                </p>
+              )}
+              {s.label === 'Declined' && (
+                <p className="text-[10px] text-slate-500 font-bold mt-1">
+                  {isDeclinedFilterActive ? 'Filter active — click to clear' : 'Click to view declined'}
                 </p>
               )}
               {s.label === 'SLA Breached' && (
