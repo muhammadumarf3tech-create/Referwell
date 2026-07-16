@@ -15,8 +15,11 @@ public static class PriorityCalculator
         DateTime patientDateOfBirth,
         double weightUrgency = 50,
         double weightWaitTime = 30,
-        double weightPatient = 20)
+        double weightPatient = 20,
+        DateTime? asOf = null)
     {
+        var now = asOf ?? DateTime.Now;
+
         // Normalize urgency (1-3) to 0-100 scale
         double urgencyScore = urgency switch
         {
@@ -27,12 +30,12 @@ public static class PriorityCalculator
         };
 
         // Wait time in days, capped at 90 days → normalized 0-100
-        double waitDays = (DateTime.Now - receivedAt).TotalDays;
+        double waitDays = (now - receivedAt).TotalDays;
         double waitScore = Math.Min(waitDays / 90.0, 1.0) * 100;
 
         // Patient age: older patients → higher score (capped at 100 for 90+)
-        int age = DateTime.Now.Year - patientDateOfBirth.Year;
-        if (patientDateOfBirth.Date > DateTime.Now.AddYears(-age)) age--;
+        int age = now.Year - patientDateOfBirth.Year;
+        if (patientDateOfBirth.Date > now.AddYears(-age)) age--;
         double ageScore = Math.Min(age / 90.0, 1.0) * 100;
 
         return ((weightUrgency / 100.0) * urgencyScore)

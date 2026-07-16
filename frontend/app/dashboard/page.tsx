@@ -273,7 +273,7 @@ export default function DashboardPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [stats, setStats] = useState({ total: 0, active: 0, urgent: 0, breached: 0 });
+  const [stats, setStats] = useState({ total: 0, active: 0, urgent: 0, breached: 0, completed: 0 });
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const hubRef = useRef<signalR.HubConnection | null>(null);
 
@@ -375,7 +375,8 @@ export default function DashboardPage() {
           total: data.totalCount,
           active: data.activeCount,
           urgent: data.urgentCount,
-          breached: data.breachedCount
+          breached: data.breachedCount,
+          completed: data.completedCount ?? 0,
         });
         setCurrentPage(pageToFetch);
       }
@@ -438,7 +439,7 @@ export default function DashboardPage() {
     hub.on('ReferralClaimed', () => { fetchReferralsRef.current(); });
     hub.on('ReferralReleased', () => { fetchReferralsRef.current(); });
     hub.on('ReferralUpdated', () => { fetchReferralsRef.current(); });
-    hub.on('QueueResorted', () => { fetchReferralsRef.current(); showToast('success', 'Priority weights updated — queue resorted'); });
+    hub.on('QueueResorted', () => { fetchReferralsRef.current(); });
     hub.on('SlaBreached', (payload: { caseNo?: string; patientName?: string }) => {
       fetchReferralsRef.current();
       const label = payload?.caseNo
@@ -722,6 +723,8 @@ export default function DashboardPage() {
     }
   };
 
+  const isCompletedFilterActive = filterStatus.length === 1 && filterStatus[0] === 'Completed';
+
   // Stats are bound from state variable updated by the backend
 
   const isGP = user?.roles.includes('GP') && !user?.roles.includes('Admin') && !user?.roles.includes('TriageNurse');
@@ -775,11 +778,18 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
           {[
             { label: 'Total Referrals', value: stats.total, color: 'text-blue-600', bg: 'bg-white border-blue-100', onClick: undefined as (() => void) | undefined },
             { label: 'Active Triages', value: stats.active, color: 'text-emerald-600', bg: 'bg-white border-emerald-100', onClick: undefined as (() => void) | undefined },
             { label: 'High Priority', value: stats.urgent, color: 'text-orange-600', bg: 'bg-white border-orange-100', onClick: undefined as (() => void) | undefined },
+            {
+              label: 'Completed',
+              value: stats.completed,
+              color: 'text-slate-600',
+              bg: isCompletedFilterActive ? 'bg-slate-100 border-slate-300 ring-2 ring-slate-200' : 'bg-white border-slate-200',
+              onClick: () => setFilterStatus(prev => (prev.length === 1 && prev[0] === 'Completed' ? [] : ['Completed'])),
+            },
             {
               label: 'SLA Breached',
               value: stats.breached,
@@ -793,11 +803,28 @@ export default function DashboardPage() {
               type="button"
               onClick={s.onClick}
               disabled={!s.onClick}
-              className={`${s.bg} border rounded-xl p-4 shadow-sm text-left transition-all ${s.onClick ? 'cursor-pointer hover:border-red-300' : 'cursor-default'}`}
-              title={s.onClick ? (filterSlaBreach ? 'Clear SLA breach filter' : 'Filter to SLA-breached referrals') : undefined}
+              className={`${s.bg} border rounded-xl p-4 shadow-sm text-left transition-all ${
+                s.onClick
+                  ? s.label === 'Completed'
+                    ? 'cursor-pointer hover:border-slate-300'
+                    : 'cursor-pointer hover:border-red-300'
+                  : 'cursor-default'
+              }`}
+              title={
+                s.onClick
+                  ? s.label === 'Completed'
+                    ? (isCompletedFilterActive ? 'Clear completed filter' : 'Filter to completed referrals')
+                    : (filterSlaBreach ? 'Clear SLA breach filter' : 'Filter to SLA-breached referrals')
+                  : undefined
+              }
             >
               <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">{s.label}</p>
               <p className={`text-2xl font-extrabold ${s.color}`}>{s.value}</p>
+              {s.label === 'Completed' && (
+                <p className="text-[10px] text-slate-500 font-bold mt-1">
+                  {isCompletedFilterActive ? 'Filter active — click to clear' : 'Click to view completed'}
+                </p>
+              )}
               {s.label === 'SLA Breached' && (
                 <p className="text-[10px] text-red-500 font-bold mt-1">
                   {filterSlaBreach ? 'Filter active — click to clear' : 'Click to filter breaches'}

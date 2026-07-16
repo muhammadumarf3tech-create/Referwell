@@ -71,17 +71,15 @@ public class ReferralService : IReferralService
             }
         }
 
+        List<ReferralStatus>? statusFilter = null;
         if (!string.IsNullOrEmpty(q.Status))
         {
-            var statusList = q.Status.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            statusFilter = q.Status.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Select(s => Enum.TryParse<ReferralStatus>(s, out var parsedStatus) ? (ReferralStatus?)parsedStatus : null)
                 .Where(s => s.HasValue)
                 .Select(s => s!.Value)
                 .ToList();
-            if (statusList.Any())
-            {
-                query = query.Where(r => statusList.Contains(r.Status));
-            }
+            if (statusFilter.Count == 0) statusFilter = null;
         }
 
         if (!string.IsNullOrEmpty(q.Urgency))
@@ -130,6 +128,13 @@ public class ReferralService : IReferralService
         {
             query = query.Where(r => r.IsMigrated == q.IsMigrated.Value);
         }
+
+        var completedCount = await query.CountAsync(r => r.Status == ReferralStatus.Completed, ct);
+
+        if (statusFilter != null)
+            query = query.Where(r => statusFilter.Contains(r.Status));
+        else
+            query = query.Where(r => r.Status != ReferralStatus.Completed && r.Status != ReferralStatus.Declined);
 
         if (q.SortBy == "receivedDate")
         {
@@ -187,6 +192,7 @@ public class ReferralService : IReferralService
             activeCount,
             urgentCount,
             breachedCount,
+            completedCount,
             page,
             pageSize,
             totalPages

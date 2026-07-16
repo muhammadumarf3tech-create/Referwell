@@ -82,6 +82,7 @@ builder.Services.AddSingleton<MassCommChannel>();
 builder.Services.AddSingleton<IMassCommQueue>(sp => sp.GetRequiredService<MassCommChannel>());
 builder.Services.AddHostedService<MassCommBackgroundService>();
 builder.Services.AddHostedService<SlaBreachBackgroundService>();
+builder.Services.AddHostedService<PriorityScoreRefreshBackgroundService>();
 
 // ── Application layer ─────────────────────────────────────────────────────────
 builder.Services.AddApplication();
