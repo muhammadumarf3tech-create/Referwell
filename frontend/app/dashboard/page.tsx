@@ -500,7 +500,9 @@ export default function DashboardPage() {
         setReferrals(prev => prev.map(item => item.id === r.id ? { 
           ...item, 
           rowVersion: data.rowVersion, 
-          claimedByUser: null 
+          claimedByUser: null,
+          assignedToUserId: null,
+          assignedToUser: null,
         } : item));
         fetchReferrals(); 
       } else {
@@ -762,7 +764,11 @@ export default function DashboardPage() {
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Referral Queue</h1>
             <p className="text-slate-500 text-sm mt-1 font-medium">
-              {isGP ? 'Referrals you submitted — sorted by priority score' : 'Shared hospital triage queue — sorted by priority score'}
+              {isGP
+                ? 'Referrals you submitted — sorted by priority score'
+                : user.roles.includes('TriageNurse') && !user.roles.includes('Admin')
+                  ? 'Your caseload and unassigned referrals — sorted by priority score'
+                  : 'Shared hospital triage queue — sorted by priority score'}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -931,12 +937,22 @@ export default function DashboardPage() {
             {(user.roles.includes('Admin') || user.roles.includes('TriageNurse')) && (
               <MultiSelect
                 label="Assignee"
-                options={users
-                  .filter(u => u.roles.includes('TriageNurse') || u.roles.includes('Admin'))
-                  .map(u => ({
-                  value: u.id,
-                  label: `${u.title ? u.title + ' ' : ''}${u.fullName}`
-                }))}
+                options={[
+                  { value: 'unassigned', label: 'Unassigned' },
+                  ...users
+                    .filter(u => {
+                      if (!(u.roles.includes('TriageNurse') || u.roles.includes('Admin'))) return false;
+                      // Triage nurses (non-admin): only filter themselves within own+unassigned view
+                      if (user.roles.includes('TriageNurse') && !user.roles.includes('Admin')) {
+                        return u.id === user.id;
+                      }
+                      return true;
+                    })
+                    .map(u => ({
+                      value: u.id,
+                      label: `${u.title ? u.title + ' ' : ''}${u.fullName}`
+                    })),
+                ]}
                 selectedValues={filterAssignee}
                 onChange={setFilterAssignee}
                 icon={<User className="w-3.5 h-3.5 text-slate-400" />}

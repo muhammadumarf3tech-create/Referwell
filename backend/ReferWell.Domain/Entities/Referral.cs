@@ -145,6 +145,8 @@ public class Referral
     {
         ClaimedByUserId = null;
         ClaimedAt = null;
+        // Return to the shared unassigned pool so another nurse can pick it up.
+        AssignedToUserId = null;
         UpdatedAt = DateTime.Now;
     }
 

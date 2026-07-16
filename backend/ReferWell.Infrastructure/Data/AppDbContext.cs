@@ -315,6 +315,31 @@ public class AppDbContext : DbContext, IApplicationDbContext
             }
         );
 
+        // Patients menu — all roles (GPs register patients; nurses/admins manage the register)
+        modelBuilder.Entity<RoleMenuAccess>().HasData(
+            new RoleMenuAccess
+            {
+                Id = Guid.Parse("99999999-9999-9999-9999-000000000019"),
+                Role = UserRole.Admin,
+                MenuItem = "Patients",
+                HasAccess = true
+            },
+            new RoleMenuAccess
+            {
+                Id = Guid.Parse("99999999-9999-9999-9999-00000000001A"),
+                Role = UserRole.TriageNurse,
+                MenuItem = "Patients",
+                HasAccess = true
+            },
+            new RoleMenuAccess
+            {
+                Id = Guid.Parse("99999999-9999-9999-9999-00000000001B"),
+                Role = UserRole.GP,
+                MenuItem = "Patients",
+                HasAccess = true
+            }
+        );
+
         // ── Seed Standalone Patients ──────────────────────────────────────────
         var p1Id = Guid.Parse("55555555-5555-5555-5555-555555555555");
         var p2Id = Guid.Parse("66666666-6666-6666-6666-666655555555");

@@ -15,7 +15,7 @@ namespace ReferWell.Infrastructure.Services;
 /// </summary>
 public class PriorityScoreRefreshBackgroundService : BackgroundService
 {
-    private static readonly TimeSpan PollInterval = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan PollInterval = TimeSpan.FromMinutes(10);
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<PriorityScoreRefreshBackgroundService> _logger;

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { 
   LayoutDashboard, Settings, MessageSquare, Users, 
-  LogOut, ChevronDown, Activity, Bell, Key, Upload
+  LogOut, ChevronDown, Activity, Bell, Key, Upload, ContactRound
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { fetchMenuAccess, hasMenuAccess, type MenuAccessDto } from '@/lib/menuAccess';
@@ -15,6 +15,11 @@ const navItems = [
     label: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
+  },
+  {
+    label: 'Patients',
+    href: '/patients',
+    icon: ContactRound,
   },
   {
     label: 'Priority Config',

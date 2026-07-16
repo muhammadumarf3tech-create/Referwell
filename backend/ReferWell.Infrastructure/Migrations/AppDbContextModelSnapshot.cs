@@ -1000,6 +1000,27 @@ namespace ReferWell.Infrastructure.Migrations
                             HasAccess = false,
                             MenuItem = "Referral Import",
                             Role = 3
+                        },
+                        new
+                        {
+                            Id = new Guid("99999999-9999-9999-9999-000000000019"),
+                            HasAccess = true,
+                            MenuItem = "Patients",
+                            Role = 1
+                        },
+                        new
+                        {
+                            Id = new Guid("99999999-9999-9999-9999-00000000001a"),
+                            HasAccess = true,
+                            MenuItem = "Patients",
+                            Role = 2
+                        },
+                        new
+                        {
+                            Id = new Guid("99999999-9999-9999-9999-00000000001b"),
+                            HasAccess = true,
+                            MenuItem = "Patients",
+                            Role = 3
                         });
                 });
 

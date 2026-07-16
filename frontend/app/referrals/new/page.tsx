@@ -136,6 +136,17 @@ export default function NewReferralPage() {
     e.preventDefault();
     if (!user) return;
 
+    const cleanEmail = newPatientForm.email.trim();
+    if (!cleanEmail) {
+      setPatientError('Email address is required.');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      setPatientError('Please enter a valid email address format.');
+      return;
+    }
+
     // Validate NHI format (3 letters + 4 digits)
     const nhiClean = newPatientForm.nhiNumber.trim().toUpperCase();
     if (!/^[A-Z]{3}\d{4}$/.test(nhiClean)) {
@@ -166,6 +177,7 @@ export default function NewReferralPage() {
         token: user.token, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...newPatientForm,
+          email: cleanEmail,
           nhiNumber: nhiClean,
           phoneNumber: fullPhoneNumber
         })
@@ -609,10 +621,13 @@ export default function NewReferralPage() {
                 <label className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1.5 block">Email Address</label>
                 <input 
                   type="email"
+                  required
                   value={newPatientForm.email} 
                   onChange={e => setNewPatientForm(f => ({...f, email: e.target.value}))}
                   placeholder="e.g. john.doe@example.com"
                   maxLength={256}
+                  pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
+                  title="Enter a valid email address"
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
                 />
               </div>

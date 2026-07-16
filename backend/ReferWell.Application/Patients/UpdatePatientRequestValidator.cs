@@ -2,9 +2,9 @@ using FluentValidation;
 
 namespace ReferWell.Application.Patients;
 
-public class CreatePatientRequestValidator : AbstractValidator<CreatePatientRequest>
+public class UpdatePatientRequestValidator : AbstractValidator<UpdatePatientRequest>
 {
-    public CreatePatientRequestValidator()
+    public UpdatePatientRequestValidator()
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
         RuleFor(x => x.NhiNumber).NotEmpty().MaximumLength(20);

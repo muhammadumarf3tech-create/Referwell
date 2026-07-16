@@ -23,7 +23,7 @@ public class ReferralClaimTests
     }
 
     [Fact]
-    public void Release_ClearsClaim()
+    public void Release_ClearsClaimAndUnassigns()
     {
         var referral = new Referral();
         var user = Guid.NewGuid();
@@ -33,6 +33,7 @@ public class ReferralClaimTests
 
         Assert.Null(referral.ClaimedByUserId);
         Assert.Null(referral.ClaimedAt);
+        Assert.Null(referral.AssignedToUserId);
     }
 
     [Fact]
@@ -47,5 +48,6 @@ public class ReferralClaimTests
         referral.Claim(user2);
 
         Assert.Equal(user2, referral.ClaimedByUserId);
+        Assert.Equal(user2, referral.AssignedToUserId);
     }
 }

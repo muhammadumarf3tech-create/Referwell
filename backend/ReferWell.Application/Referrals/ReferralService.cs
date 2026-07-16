@@ -51,23 +51,45 @@ public class ReferralService : IReferralService
             .Include(r => r.Attachments)
             .AsQueryable();
 
-        // Shared hospital queue: Admin + TriageNurse see all. GPs see only referrals they created.
-        if (_currentUser.IsInRole("GP")
-            && !_currentUser.IsInRole("Admin")
-            && !_currentUser.IsInRole("TriageNurse"))
+        var isAdmin = _currentUser.IsInRole("Admin");
+        var isTriageNurse = _currentUser.IsInRole("TriageNurse");
+        var isGpOnly = _currentUser.IsInRole("GP") && !isAdmin && !isTriageNurse;
+
+        // GPs: referrals they created. Triage nurses: own + unassigned. Admins: all.
+        if (isGpOnly)
         {
             query = query.Where(r => r.CreatedByUserId == _currentUser.UserId);
         }
-        else if (!string.IsNullOrEmpty(q.AssignedTo))
+        else if (isTriageNurse && !isAdmin)
         {
-            var assigneeList = q.AssignedTo.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            query = query.Where(r =>
+                !r.AssignedToUserId.HasValue || r.AssignedToUserId == _currentUser.UserId);
+        }
+
+        if (!isGpOnly && !string.IsNullOrEmpty(q.AssignedTo))
+        {
+            var tokens = q.AssignedTo.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var includeUnassigned = tokens.Any(t => t.Equals("unassigned", StringComparison.OrdinalIgnoreCase));
+            var assigneeList = tokens
                 .Select(id => Guid.TryParse(id, out var parsedId) ? (Guid?)parsedId : null)
                 .Where(id => id.HasValue)
                 .Select(id => id!.Value)
                 .ToList();
-            if (assigneeList.Any())
+
+            if (includeUnassigned && assigneeList.Count > 0)
             {
-                query = query.Where(r => r.AssignedToUserId.HasValue && assigneeList.Contains(r.AssignedToUserId.Value));
+                query = query.Where(r =>
+                    !r.AssignedToUserId.HasValue
+                    || (r.AssignedToUserId.HasValue && assigneeList.Contains(r.AssignedToUserId.Value)));
+            }
+            else if (includeUnassigned)
+            {
+                query = query.Where(r => !r.AssignedToUserId.HasValue);
+            }
+            else if (assigneeList.Count > 0)
+            {
+                query = query.Where(r =>
+                    r.AssignedToUserId.HasValue && assigneeList.Contains(r.AssignedToUserId.Value));
             }
         }
 
@@ -605,8 +627,13 @@ public class ReferralService : IReferralService
 
     private bool CanAccessReferral(Referral referral)
     {
-        if (_currentUser.IsInRole("Admin") || _currentUser.IsInRole("TriageNurse"))
+        if (_currentUser.IsInRole("Admin"))
             return true;
+
+        // Triage nurses: unassigned queue items plus their own assigned caseload.
+        if (_currentUser.IsInRole("TriageNurse"))
+            return !referral.AssignedToUserId.HasValue
+                || referral.AssignedToUserId == _currentUser.UserId;
 
         // GPs: referrals they created (referring clinician view).
         return referral.CreatedByUserId == _currentUser.UserId;
